@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f1a">
+<title>交易决策系统</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27><text y=%2714%27 font-size=%2714%27>📊</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 180 180%27><rect fill=%27%230a0f1a%27 width=%27180%27 height=%27180%27 rx=%2740%27/><text x=%2790%27 y=%27125%27 font-size=%27100%27 text-anchor=%27middle%27>📊</text></svg>">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi5Lqk5piT5Yaz562W57O757ufIiwic2hvcnRfbmFtZSI6IuS6pOaYk+ezu+e7nyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMGEwZjFhIiwidGhlbWVfY29sb3IiOiIjMGEwZjFhIn0=">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#0a0f1a;height:100%}
+#L{display:flex;align-items:center;justify-content:center;height:100vh;color:#64748b;font-family:-apple-system,system-ui,sans-serif;flex-direction:column;gap:10px}
+#L .ic{font-size:36px;animation:p 1.2s ease-in-out infinite}
+#L .tx{font-size:14px}
+#L .err{color:#f87171;font-size:12px;max-width:300px;text-align:center;line-height:1.5;display:none;margin-top:8px}
+@keyframes p{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.9)}}
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="L">
+    <div class="ic">📊</div>
+    <div class="tx">加载中</div>
+    <div class="err" id="err">CDN加载失败，请检查网络连接后刷新页面。<br>如部署到GitHub Pages，请确保能访问cdn.jsdelivr.net</div>
+  </div>
+</div>
+<div id="offline-badge" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;padding:2px 0;background:#92400e;color:#fcd34d;font-size:11px;font-family:system-ui">⚡ 离线模式</div>
+
+<script>
+// localStorage polyfill for window.storage API
+var ___storage={
+  get:function(k){return new Promise(function(r){try{var v=localStorage.getItem(k);r(v!==null?{key:k,value:v}:null)}catch(e){r(null)}})},
+  set:function(k,v){return new Promise(function(r){try{localStorage.setItem(k,v);r({key:k,value:v})}catch(e){r(null)}})}
+};
+
+// CDN loader with fallbacks
+var CDN_SETS = [
+  {
+    react: "https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js",
+    dom: "https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"
+  },
+  {
+    react: "https://cdn.bootcdn.net/ajax/libs/react/18.2.0/umd/react.production.min.js",
+    dom: "https://cdn.bootcdn.net/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"
+  },
+  {
+    react: "https://unpkg.com/react@18.2.0/umd/react.production.min.js",
+    dom: "https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"
+  }
+];
+
+function loadScript(url) {
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement("script");
+    s.src = url;
+    s.crossOrigin = "anonymous";
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function tryLoadCDN(idx) {
+  if (idx >= CDN_SETS.length) {
+    document.getElementById("err").style.display = "block";
+    document.querySelector("#L .tx").textContent = "加载失败";
+    return;
+  }
+  var set = CDN_SETS[idx];
+  loadScript(set.react).then(function() {
+    return loadScript(set.dom);
+  }).then(function() {
+    startApp();
+  }).catch(function() {
+    tryLoadCDN(idx + 1);
+  });
+}
+
+function startApp() {
+  // app code injected below
+  try {
+    __initApp__();
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(window.App));
+  } catch(e) {
+    document.getElementById("err").style.display = "block";
+    document.getElementById("err").textContent = "应用启动失败: " + e.message;
+  }
+}
+
+tryLoadCDN(0);
+</script>
+
+<script>
+function __initApp__() {
+var useState = React.useState;
+var useEffect = React.useEffect;
+var useRef = React.useRef;
+var STORAGE_KEY = "trading-decision-v3";
+function getDefaultDims() {
+  return [
+    {
+      id: "narrative",
+      name: "市场叙事",
+      pct: 15,
+      color: "#6366f1",
+      custom: false,
+      items: [
+        { id: "nar_text", name: "主导叙事&强度", w: 8, type: "textslider" },
+        { id: "nar_phase", name: "叙事阶段", w: 4, type: "phase", phases: [
+          { label: "萌芽", score: 9, color: "#22c55e", desc: "少数人察觉，市场未反应" },
+          { label: "扩散", score: 7, color: "#84cc16", desc: "叙事传播，资金开始流入" },
+          { label: "共识", score: 4, color: "#eab308", desc: "人人皆知，驱动力减弱" },
+          { label: "过热", score: 2, color: "#f97316", desc: "过度定价，反转风险高" },
+          { label: "崩塌", score: 1, color: "#ef4444", desc: "叙事破灭，恐慌蔓延" }
+        ] },
+        { id: "nar_counter", name: "反叙事积蓄", w: 3, type: "phase", phases: [
+          { label: "无", score: 2, color: "#ef4444", desc: "无反对声音" },
+          { label: "微弱", score: 4, color: "#f97316", desc: "零星质疑出现" },
+          { label: "明显", score: 7, color: "#84cc16", desc: "形成对立观点" },
+          { label: "激烈", score: 9, color: "#22c55e", desc: "强烈对冲叙事" }
+        ] }
+      ]
+    },
+    {
+      id: "macro",
+      name: "宏观面",
+      pct: 20,
+      color: "#8b5cf6",
+      custom: false,
+      items: [
+        { id: "mac_rate", name: "利率/流动性", w: 8, type: "phase", phases: [
+          { label: "宽松", score: 9, color: "#22c55e", desc: "央行放水，流动性充裕" },
+          { label: "中性", score: 6, color: "#eab308", desc: "政策平稳观望" },
+          { label: "收紧", score: 3, color: "#f97316", desc: "加息缩表进行中" },
+          { label: "危机", score: 1, color: "#ef4444", desc: "流动性枯竭" }
+        ] },
+        { id: "mac_fiscal", name: "财政方向", w: 4, type: "slider" },
+        { id: "mac_usd", name: "美元趋势", w: 4, type: "slider" },
+        { id: "mac_geo", name: "地缘风险", w: 4, type: "phase", phases: [
+          { label: "平静", score: 9, color: "#22c55e", desc: "无重大地缘冲突" },
+          { label: "局部", score: 6, color: "#eab308", desc: "局部紧张升温" },
+          { label: "升级", score: 3, color: "#f97316", desc: "冲突扩大化" },
+          { label: "危机", score: 1, color: "#ef4444", desc: "全面危机爆发" }
+        ] }
+      ]
+    },
+    {
+      id: "fundamental",
+      name: "基本面",
+      pct: 15,
+      color: "#ec4899",
+      custom: false,
+      items: [
+        { id: "fun_core", name: "核心面支撑", w: 6, type: "slider" },
+        { id: "fun_val", name: "估值vs历史", w: 4, type: "slider" },
+        { id: "fun_supply", name: "供需不对称", w: 5, type: "slider" }
+      ]
+    },
+    {
+      id: "technical",
+      name: "技术面",
+      pct: 15,
+      color: "#14b8a6",
+      custom: false,
+      items: [
+        { id: "tec_trend", name: "趋势方向", w: 6, type: "slider" },
+        { id: "tec_sr", name: "支撑阻力", w: 4, type: "slider" },
+        { id: "tec_vol", name: "量价配合", w: 3, type: "slider" },
+        { id: "tec_ind", name: "指标共振", w: 2, type: "slider" }
+      ]
+    },
+    {
+      id: "sentiment",
+      name: "情绪面",
+      pct: 12,
+      color: "#f59e0b",
+      custom: false,
+      items: [
+        { id: "sen_fg", name: "恐贪/资金费率", w: 5, type: "phase", phases: [
+          { label: "极度恐惧", score: 8, color: "#22c55e", desc: "抄底信号强烈" },
+          { label: "恐惧", score: 6, color: "#84cc16", desc: "市场偏悲观" },
+          { label: "中性", score: 5, color: "#eab308", desc: "情绪平衡" },
+          { label: "贪婪", score: 3, color: "#f97316", desc: "过度乐观" },
+          { label: "极度贪婪", score: 1, color: "#ef4444", desc: "见顶风险极高" }
+        ] },
+        { id: "sen_pos", name: "持仓分布", w: 4, type: "slider" },
+        { id: "sen_heat", name: "舆论热度", w: 3, type: "slider" }
+      ]
+    },
+    {
+      id: "news",
+      name: "消息面",
+      pct: 13,
+      color: "#06b6d4",
+      custom: false,
+      items: [
+        { id: "new_event", name: "重大事件", w: 5, type: "slider" },
+        { id: "new_price", name: "定价程度", w: 5, type: "phase", phases: [
+          { label: "未定价", score: 9, color: "#22c55e", desc: "市场尚未反应" },
+          { label: "部分", score: 6, color: "#eab308", desc: "已部分消化" },
+          { label: "充分", score: 3, color: "#f97316", desc: "Price in完毕" },
+          { label: "过度定价", score: 7, color: "#84cc16", desc: "反应过度有回摆空间" }
+        ] },
+        { id: "new_swan", name: "黑天鹅", w: 3, type: "slider" }
+      ]
+    },
+    {
+      id: "bullbear",
+      name: "牛熊判断",
+      pct: 10,
+      color: "#a855f7",
+      custom: false,
+      items: [
+        { id: "bb_cycle", name: "市场周期", w: 5, type: "phase", phases: [
+          { label: "底部恐慌", score: 9, color: "#22c55e", desc: "极度低估，恐慌出清" },
+          { label: "早牛", score: 8, color: "#4ade80", desc: "趋势反转初期" },
+          { label: "中牛", score: 6, color: "#84cc16", desc: "趋势确认，主升浪" },
+          { label: "晚牛", score: 3, color: "#eab308", desc: "泡沫膨胀，谨慎" },
+          { label: "顶部", score: 1, color: "#ef4444", desc: "见顶信号明确" },
+          { label: "早熊", score: 3, color: "#f97316", desc: "趋势转空初期" },
+          { label: "深熊", score: 5, color: "#eab308", desc: "持续下跌，等待筑底" }
+        ] },
+        { id: "bb_vix", name: "波动率", w: 3, type: "phase", phases: [
+          { label: "极低波", score: 4, color: "#eab308", desc: "平静期，暴风雨前兆?" },
+          { label: "正常", score: 7, color: "#22c55e", desc: "健康波动范围" },
+          { label: "高波", score: 5, color: "#f97316", desc: "波动加剧需控仓" },
+          { label: "极端", score: 2, color: "#ef4444", desc: "市场恐慌失控" }
+        ] },
+        { id: "bb_cross", name: "跨市场一致", w: 2, type: "phase", phases: [
+          { label: "高度一致", score: 9, color: "#22c55e", desc: "多市场共振" },
+          { label: "基本一致", score: 7, color: "#84cc16", desc: "大方向趋同" },
+          { label: "混合", score: 4, color: "#eab308", desc: "信号矛盾" },
+          { label: "背离", score: 2, color: "#ef4444", desc: "严重分歧" }
+        ] }
+      ]
+    }
+  ];
+}
+var PSY_ITEMS = [
+  { cat: "市场认知", items: [
+    { id: "p0", text: "我清楚当前市场的主要驱动因素", w: 8, ref: "能列举2-3个核心驱动力" },
+    { id: "p1", text: "我理解当前趋势的时间框架", w: 7, ref: "明确是日内/波段/趋势级别" },
+    { id: "p2", text: "我已评估关键支撑/阻力位", w: 7, ref: "标注了具体价位" },
+    { id: "p3", text: "我了解近期重要事件日历", w: 6, ref: "知道本周关键数据/会议" },
+    { id: "p4", text: "我能区分信号和噪音", w: 8, ref: "不被短期波动干扰判断" }
+  ] },
+  { cat: "风险管理", items: [
+    { id: "p5", text: "我的仓位大小符合风险预算", w: 9, ref: "单笔不超总资金2-5%" },
+    { id: "p6", text: "我设定了明确的止损位", w: 10, ref: "入场前确定止损价格" },
+    { id: "p7", text: "我的最大回撤在可承受范围", w: 9, ref: "即使全部止损也不伤根基" },
+    { id: "p8", text: "我已考虑极端情况影响", w: 8, ref: "黑天鹅场景不会爆仓" },
+    { id: "p9", text: "我的杠杆水平合理", w: 10, ref: "杠杆倍数与确定性匹配" }
+  ] },
+  { cat: "心理状态", items: [
+    { id: "p10", text: "我没有因亏损急于翻本", w: 9, ref: "冷静分析不带报复情绪" },
+    { id: "p11", text: "我没有FOMO情绪", w: 8, ref: "错过也不焦虑" },
+    { id: "p12", text: "我的情绪状态平稳清醒", w: 8, ref: "充足睡眠，心态平和" },
+    { id: "p13", text: "我能接受这笔交易完全亏损", w: 9, ref: "亏损不影响生活质量" }
+  ] },
+  { cat: "执行纪律", items: [
+    { id: "p14", text: "我有明确的入场理由（非直觉）", w: 8, ref: "能写出逻辑链条" },
+    { id: "p15", text: "我预设了止盈和止损计划", w: 9, ref: "入场前已有完整退出方案" },
+    { id: "p16", text: "我不会在入场后移动止损", w: 7, ref: "止损只移向有利方向" },
+    { id: "p17", text: "我愿意错过机会而非勉强入场", w: 8, ref: "宁可空仓也不乱打" }
+  ] }
+];
+var TRADE_TAGS = ["系统内盈利", "系统内亏损", "系统外盈利", "系统外亏损", "FOMO", "报复交易", "完美执行"];
+var REVIEW_QS = [
+  "本周最大的认知突破是什么？",
+  "哪些交易违反了系统规则？为什么？",
+  "情绪在哪些时刻影响了决策？",
+  "风险管理有哪些需要改进的地方？",
+  "下周需要重点关注的市场变量？",
+  "对自己交易系统的迭代思考"
+];
+var EXIT_LABELS = [
+  { key: "hard", name: "硬止损", icon: "🛑" },
+  { key: "thesis", name: "Thesis失效", icon: "❌" },
+  { key: "tp1", name: "止盈1", icon: "🎯" },
+  { key: "tp2", name: "止盈2", icon: "🏆" },
+  { key: "time", name: "时间止损", icon: "⏰" },
+  { key: "emergency", name: "突发退出", icon: "⚡" }
+];
+var CUSTOM_COLORS = ["#f43f5e", "#8b5cf6", "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1", "#14b8a6", "#eab308", "#a855f7"];
+function makeEmptyPos() {
+  return { target: "", dir: "多", ratio: "", driver: "", exits: { hard: "", thesis: "", tp1: "", tp2: "", time: "", emergency: "" } };
+}
+function makeEmptySession() {
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    date: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+    title: "",
+    trades: [],
+    review: { q0: "", q1: "", q2: "", q3: "", q4: "", q5: "" }
+  };
+}
+function getDefault() {
+  var dims = getDefaultDims();
+  var market = {};
+  var i, j, d, item;
+  for (i = 0; i < dims.length; i++) {
+    d = dims[i];
+    for (j = 0; j < d.items.length; j++) {
+      item = d.items[j];
+      if (item.type === "textslider") {
+        market[item.id + "_text"] = "";
+        market[item.id + "_score"] = 5;
+      } else if (item.type === "phase") {
+        market[item.id] = "";
+      } else {
+        market[item.id] = 5;
+      }
+    }
+  }
+  var psy = {};
+  for (i = 0; i < PSY_ITEMS.length; i++) {
+    for (j = 0; j < PSY_ITEMS[i].items.length; j++) {
+      psy[PSY_ITEMS[i].items[j].id] = false;
+    }
+  }
+  return {
+    dims,
+    market,
+    psy,
+    edge: { conf: [false, false, false, false, false], scenarios: [
+      { prob: "25", pnl: "30" },
+      { prob: "40", pnl: "10" },
+      { prob: "25", pnl: "-15" },
+      { prob: "10", pnl: "-50" }
+    ] },
+    positions: [makeEmptyPos(), makeEmptyPos(), makeEmptyPos(), makeEmptyPos()],
+    opps: [
+      { name: "", edge: 5, cert: 5, reward: 5 },
+      { name: "", edge: 5, cert: 5, reward: 5 },
+      { name: "", edge: 5, cert: 5, reward: 5 },
+      { name: "", edge: 5, cert: 5, reward: 5 }
+    ],
+    kelly: { w: "50", r: "2" },
+    reviewSessions: [makeEmptySession()],
+    activeSession: 0
+  };
+}
+function getItemScore(item, market) {
+  if (item.type === "textslider") return parseFloat(market[item.id + "_score"]) || 0;
+  if (item.type === "phase") {
+    var sel = market[item.id];
+    if (!sel) return 0;
+    for (var k = 0; k < (item.phases || []).length; k++) {
+      if (item.phases[k].label === sel) return item.phases[k].score;
+    }
+    return 0;
+  }
+  return parseFloat(market[item.id]) || 0;
+}
+function calcDimScore(dim, market) {
+  var sumW = 0, sumWS = 0;
+  for (var j = 0; j < dim.items.length; j++) {
+    var it = dim.items[j];
+    var s = getItemScore(it, market);
+    sumW += it.w;
+    sumWS += s * it.w;
+  }
+  return sumW === 0 ? 0 : sumWS / sumW;
+}
+function calcOverall(dims, market) {
+  var totalPct = 0, totalScore = 0;
+  for (var i = 0; i < dims.length; i++) {
+    var ds = calcDimScore(dims[i], market);
+    totalScore += ds * dims[i].pct;
+    totalPct += dims[i].pct;
+  }
+  return totalPct === 0 ? 0 : totalScore / totalPct;
+}
+function calcPsyRate(psy) {
+  var totalW = 0, passW = 0;
+  for (var i = 0; i < PSY_ITEMS.length; i++) {
+    for (var j = 0; j < PSY_ITEMS[i].items.length; j++) {
+      var it = PSY_ITEMS[i].items[j];
+      totalW += it.w;
+      if (psy[it.id]) passW += it.w;
+    }
+  }
+  return totalW === 0 ? 0 : passW / totalW;
+}
+function getMarketLabel(score) {
+  if (score >= 7.5) return { text: "强看多", color: "#22c55e" };
+  if (score >= 6) return { text: "偏多", color: "#84cc16" };
+  if (score >= 4.5) return { text: "观望", color: "#eab308" };
+  return { text: "防守", color: "#ef4444" };
+}
+function getPsyLabel(rate) {
+  if (rate >= 0.8) return { text: "可交易", color: "#22c55e" };
+  if (rate >= 0.6) return { text: "谨慎", color: "#eab308" };
+  return { text: "不交易", color: "#ef4444" };
+}
+function cellColor(n) {
+  if (n <= 2) return { bg: "#991b1b", fg: "#fca5a5", border: "#b91c1c" };
+  if (n <= 4) return { bg: "#92400e", fg: "#fcd34d", border: "#b45309" };
+  if (n <= 6) return { bg: "#3f3f00", fg: "#fde047", border: "#737300" };
+  if (n <= 8) return { bg: "#14532d", fg: "#86efac", border: "#166534" };
+  return { bg: "#064e3b", fg: "#6ee7b7", border: "#047857" };
+}
+function ScoreGrid(props) {
+  var val = props.value;
+  var onChange = props.onChange;
+  var label = props.label;
+  var cells = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  var activeClr = cellColor(val);
+  return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "14px" } }, label && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: "5px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "13px", color: "#cbd5e1" } }, label)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "3px" } }, cells.map(function(n) {
+    var isActive = n === val;
+    var isFilled = n <= val && n > 0;
+    var c = cellColor(n);
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: n,
+        onClick: function() {
+          onChange(n);
+        },
+        style: {
+          flex: 1,
+          height: "30px",
+          borderRadius: "5px",
+          border: "1.5px solid",
+          borderColor: isActive ? activeClr.fg : isFilled ? c.border : "#1e293b",
+          background: isActive ? activeClr.bg : isFilled ? c.bg + "88" : "#0f172a",
+          color: isActive ? activeClr.fg : isFilled ? c.fg + "aa" : "#475569",
+          fontSize: "10px",
+          fontWeight: isActive ? 800 : 500,
+          cursor: "pointer",
+          padding: 0,
+          transition: "all 0.15s",
+          boxShadow: isActive ? "0 0 8px " + activeClr.fg + "44" : "none",
+          transform: isActive ? "scale(1.08)" : "scale(1)"
+        }
+      },
+      n
+    );
+  })));
+}
+function PhaseSelector(props) {
+  var phases = props.phases || [];
+  var selected = props.selected;
+  var onSelect = props.onSelect;
+  var label = props.label;
+  var selPhase = null;
+  for (var i = 0; i < phases.length; i++) {
+    if (phases[i].label === selected) selPhase = phases[i];
+  }
+  return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "14px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", color: "#cbd5e1", marginBottom: "6px" } }, label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "5px" } }, phases.map(function(ph) {
+    var isSel = ph.label === selected;
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: ph.label,
+        onClick: function() {
+          onSelect(ph.label);
+        },
+        style: {
+          padding: "5px 10px",
+          fontSize: "12px",
+          borderRadius: "6px",
+          border: "1.5px solid",
+          borderColor: isSel ? ph.color : "#334155",
+          background: isSel ? ph.color + "22" : "transparent",
+          color: isSel ? ph.color : "#64748b",
+          cursor: "pointer",
+          fontWeight: isSel ? 700 : 400,
+          transition: "all 0.2s"
+        }
+      },
+      ph.label,
+      isSel && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: "3px", fontSize: "10px", opacity: 0.7 } }, "(", ph.score, ")")
+    );
+  })), selPhase && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: selPhase.color, marginTop: "4px", opacity: 0.8 } }, selPhase.desc));
+}
+function Toggle(props) {
+  return /* @__PURE__ */ React.createElement("div", { onClick: props.onToggle, style: {
+    width: "44px",
+    height: "24px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    background: props.on ? "#22c55e" : "#334155",
+    position: "relative",
+    transition: "background 0.2s",
+    flexShrink: 0
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: "20px",
+    height: "20px",
+    borderRadius: "10px",
+    background: "#fff",
+    position: "absolute",
+    top: "2px",
+    left: props.on ? "22px" : "2px",
+    transition: "left 0.2s",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+  } }));
+}
+function Card(props) {
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    background: "#111827",
+    borderRadius: "12px",
+    padding: "14px",
+    marginBottom: "12px",
+    border: "1px solid #1e293b"
+  } }, props.title && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", fontWeight: 700, color: "#e2e8f0", marginBottom: "10px" } }, props.title), props.children);
+}
+function RingChart(props) {
+  var score = props.score;
+  var size = 130;
+  var stroke = 9;
+  var r = (size - stroke) / 2;
+  var circ = 2 * Math.PI * r;
+  var offset = circ * (1 - score / 10);
+  var ml = getMarketLabel(score);
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", margin: "12px 0" } }, /* @__PURE__ */ React.createElement("svg", { width: size, height: size, style: { transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "#1e293b", strokeWidth: stroke }), /* @__PURE__ */ React.createElement(
+    "circle",
+    {
+      cx: size / 2,
+      cy: size / 2,
+      r,
+      fill: "none",
+      stroke: ml.color,
+      strokeWidth: stroke,
+      strokeDasharray: circ,
+      strokeDashoffset: offset,
+      strokeLinecap: "round",
+      style: { transition: "stroke-dashoffset 0.5s ease" }
+    }
+  )), /* @__PURE__ */ React.createElement("div", { style: { marginTop: "-82px", marginBottom: "46px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "26px", fontWeight: 700, color: ml.color } }, score.toFixed(1)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: ml.color, fontWeight: 600 } }, ml.text)));
+}
+function MiniBtn(props) {
+  return /* @__PURE__ */ React.createElement("button", { onClick: props.onClick, style: {
+    padding: props.pad || "3px 8px",
+    borderRadius: "5px",
+    border: "1px solid " + (props.borderColor || "#334155"),
+    background: props.bg || "transparent",
+    color: props.color || "#94a3b8",
+    fontSize: props.fs || "11px",
+    cursor: "pointer",
+    fontWeight: 500,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "3px"
+  } }, props.children);
+}
+function Tab1Market(props) {
+  var data = props.data;
+  var sf = props.setField;
+  var dims = data.dims;
+  var market = data.market;
+  var overall = calcOverall(dims, market);
+  var editModeArr = useState(false);
+  var editMode = editModeArr[0];
+  var setEditMode = editModeArr[1];
+  var collapsedArr = useState({});
+  var collapsed = collapsedArr[0];
+  var setCollapsed = collapsedArr[1];
+  function updateDim(idx, key, val) {
+    var nd = [];
+    for (var i = 0; i < dims.length; i++) {
+      if (i === idx) {
+        var d = Object.assign({}, dims[i]);
+        d[key] = val;
+        nd.push(d);
+      } else nd.push(dims[i]);
+    }
+    sf("dims", null, nd);
+  }
+  function updateItem(dimIdx, itemIdx, key, val) {
+    var nd = [];
+    for (var i = 0; i < dims.length; i++) {
+      if (i === dimIdx) {
+        var d = Object.assign({}, dims[i]);
+        var ni = [];
+        for (var j = 0; j < d.items.length; j++) {
+          if (j === itemIdx) {
+            var it = Object.assign({}, d.items[j]);
+            it[key] = val;
+            ni.push(it);
+          } else ni.push(d.items[j]);
+        }
+        d.items = ni;
+        nd.push(d);
+      } else nd.push(dims[i]);
+    }
+    sf("dims", null, nd);
+  }
+  function addDim() {
+    var uid = "custom_" + Date.now().toString(36);
+    var nd = [].concat(dims);
+    nd.push({
+      id: uid,
+      name: "新维度",
+      pct: 10,
+      color: CUSTOM_COLORS[dims.length % CUSTOM_COLORS.length],
+      custom: true,
+      items: [{ id: uid + "_i0", name: "子项1", w: 5, type: "slider" }]
+    });
+    sf("dims", null, nd);
+  }
+  function removeDim(idx) {
+    if (dims.length <= 1) return;
+    var nd = [];
+    for (var i = 0; i < dims.length; i++) {
+      if (i !== idx) nd.push(dims[i]);
+    }
+    sf("dims", null, nd);
+  }
+  function addItem(dimIdx) {
+    var uid = dims[dimIdx].id + "_i" + Date.now().toString(36);
+    var nd = [];
+    for (var i = 0; i < dims.length; i++) {
+      if (i === dimIdx) {
+        var d = Object.assign({}, dims[i]);
+        d.items = [].concat(d.items);
+        d.items.push({ id: uid, name: "新子项", w: 5, type: "slider" });
+        nd.push(d);
+      } else nd.push(dims[i]);
+    }
+    sf("dims", null, nd);
+    var nm = Object.assign({}, market);
+    nm[uid] = 5;
+    sf("market", null, nm);
+  }
+  function removeItem(dimIdx, itemIdx) {
+    if (dims[dimIdx].items.length <= 1) return;
+    var nd = [];
+    for (var i = 0; i < dims.length; i++) {
+      if (i === dimIdx) {
+        var d = Object.assign({}, dims[i]);
+        var ni = [];
+        for (var j = 0; j < d.items.length; j++) {
+          if (j !== itemIdx) ni.push(d.items[j]);
+        }
+        d.items = ni;
+        nd.push(d);
+      } else nd.push(dims[i]);
+    }
+    sf("dims", null, nd);
+  }
+  function toggleCollapse(id) {
+    var next = Object.assign({}, collapsed);
+    if (next[id]) {
+      delete next[id];
+    } else {
+      next[id] = true;
+    }
+    setCollapsed(next);
+  }
+  var totalPct = 0;
+  for (var pi = 0; pi < dims.length; pi++) totalPct += dims[pi].pct;
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(RingChart, { score: overall }), /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", color: "#64748b" } }, "权重合计: ", /* @__PURE__ */ React.createElement("span", { style: { color: Math.abs(totalPct - 100) < 0.1 ? "#22c55e" : "#ef4444", fontWeight: 700 } }, totalPct, "%")), /* @__PURE__ */ React.createElement(
+    MiniBtn,
+    {
+      onClick: function() {
+        setEditMode(!editMode);
+      },
+      color: editMode ? "#fbbf24" : "#94a3b8",
+      borderColor: editMode ? "#fbbf24" : "#334155",
+      bg: editMode ? "#fbbf2411" : "transparent"
+    },
+    editMode ? "✓ 完成" : "⚙ 编辑权重"
+  )), dims.map(function(dim) {
+    var ds = calcDimScore(dim, market);
+    return /* @__PURE__ */ React.createElement("div", { key: dim.id, style: { marginBottom: "6px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "2px" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "#94a3b8" } }, dim.name, " (", dim.pct, "%)"), /* @__PURE__ */ React.createElement("span", { style: { color: dim.color, fontWeight: 600 } }, ds.toFixed(1))), /* @__PURE__ */ React.createElement("div", { style: { height: "5px", borderRadius: "3px", background: "#1e293b", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: ds / 10 * 100 + "%", background: dim.color, borderRadius: "3px", transition: "width 0.4s" } })));
+  }), editMode && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "10px", display: "flex", gap: "6px" } }, /* @__PURE__ */ React.createElement(MiniBtn, { onClick: addDim, color: "#22c55e", borderColor: "#22c55e44", bg: "#22c55e11" }, "+ 添加维度"))), dims.map(function(dim, di) {
+    var isOpen = !collapsed[dim.id];
+    var ds = calcDimScore(dim, market);
+    return /* @__PURE__ */ React.createElement(Card, { key: dim.id }, /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        style: { display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" },
+        onClick: function() {
+          toggleCollapse(dim.id);
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: "4px", height: "16px", borderRadius: "2px", background: dim.color, flexShrink: 0 } }), editMode ? /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          value: dim.name,
+          onClick: function(e) {
+            e.stopPropagation();
+          },
+          onChange: function(e) {
+            updateDim(di, "name", e.target.value);
+          },
+          style: {
+            background: "#0f172a",
+            border: "1px solid #334155",
+            borderRadius: "4px",
+            padding: "2px 6px",
+            color: "#e2e8f0",
+            fontSize: "13px",
+            fontWeight: 700,
+            width: "80px"
+          }
+        }
+      ) : /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: "#e2e8f0" } }, dim.name), editMode ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "2px" }, onClick: function(e) {
+        e.stopPropagation();
+      } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          value: dim.pct,
+          min: "1",
+          max: "100",
+          onChange: function(e) {
+            updateDim(di, "pct", parseInt(e.target.value) || 1);
+          },
+          style: {
+            width: "40px",
+            background: "#0f172a",
+            border: "1px solid #334155",
+            borderRadius: "4px",
+            padding: "2px 4px",
+            color: dim.color,
+            fontSize: "12px",
+            fontWeight: 700,
+            textAlign: "center"
+          }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "11px", color: "#64748b" } }, "%")) : /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", color: "#64748b" } }, "(", dim.pct, "%)")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "6px" } }, editMode && dim.custom && /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function(e) {
+        e.stopPropagation();
+        removeDim(di);
+      }, color: "#ef4444", borderColor: "#ef444444" }, "✕"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: dim.color } }, ds.toFixed(1)), /* @__PURE__ */ React.createElement("span", { style: {
+        color: "#64748b",
+        fontSize: "14px",
+        transition: "transform 0.2s",
+        transform: isOpen ? "rotate(180deg)" : "rotate(0)"
+      } }, "▾"))
+    ), isOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "12px" } }, dim.items.map(function(item, ii) {
+      if (item.type === "textslider") {
+        return /* @__PURE__ */ React.createElement("div", { key: item.id, style: { marginBottom: "14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "13px", color: "#cbd5e1" } }, item.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "4px" } }, editMode && /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            type: "number",
+            value: item.w,
+            min: "1",
+            max: "20",
+            onChange: function(e) {
+              updateItem(di, ii, "w", parseInt(e.target.value) || 1);
+            },
+            style: {
+              width: "32px",
+              background: "#0f172a",
+              border: "1px solid #334155",
+              borderRadius: "4px",
+              padding: "1px 3px",
+              color: "#fbbf24",
+              fontSize: "11px",
+              textAlign: "center"
+            }
+          }
+        ), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: "10px",
+          color: "#64748b",
+          background: "#1e293b",
+          padding: "1px 6px",
+          borderRadius: "4px"
+        } }, "W", item.w))), /* @__PURE__ */ React.createElement(
+          "textarea",
+          {
+            value: market[item.id + "_text"] || "",
+            onChange: function(e) {
+              sf("market", item.id + "_text", e.target.value);
+            },
+            placeholder: "描述当前主导叙事...",
+            rows: 2,
+            style: {
+              width: "100%",
+              background: "#0f172a",
+              border: "1px solid #334155",
+              borderRadius: "8px",
+              padding: "8px",
+              color: "#e2e8f0",
+              fontSize: "13px",
+              resize: "vertical",
+              boxSizing: "border-box"
+            }
+          }
+        ), /* @__PURE__ */ React.createElement(
+          ScoreGrid,
+          {
+            label: "驱动力强度",
+            value: market[item.id + "_score"] || 5,
+            onChange: function(v) {
+              sf("market", item.id + "_score", v);
+            }
+          }
+        ));
+      }
+      if (item.type === "phase") {
+        return /* @__PURE__ */ React.createElement("div", { key: item.id }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: "4px", marginBottom: "-2px" } }, editMode && /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            type: "number",
+            value: item.w,
+            min: "1",
+            max: "20",
+            onChange: function(e) {
+              updateItem(di, ii, "w", parseInt(e.target.value) || 1);
+            },
+            style: {
+              width: "32px",
+              background: "#0f172a",
+              border: "1px solid #334155",
+              borderRadius: "4px",
+              padding: "1px 3px",
+              color: "#fbbf24",
+              fontSize: "11px",
+              textAlign: "center"
+            }
+          }
+        ), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: "10px",
+          color: "#64748b",
+          background: "#1e293b",
+          padding: "1px 6px",
+          borderRadius: "4px"
+        } }, "W", item.w)), /* @__PURE__ */ React.createElement(
+          PhaseSelector,
+          {
+            label: item.name,
+            phases: item.phases,
+            selected: market[item.id] || "",
+            onSelect: function(v) {
+              sf("market", item.id, v);
+            }
+          }
+        ));
+      }
+      return /* @__PURE__ */ React.createElement("div", { key: item.id }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, editMode ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "4px", flex: 1 } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          value: item.name,
+          onChange: function(e) {
+            updateItem(di, ii, "name", e.target.value);
+          },
+          style: {
+            background: "#0f172a",
+            border: "1px solid #334155",
+            borderRadius: "4px",
+            padding: "2px 6px",
+            color: "#cbd5e1",
+            fontSize: "12px",
+            width: "100px"
+          }
+        }
+      ), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          value: item.w,
+          min: "1",
+          max: "20",
+          onChange: function(e) {
+            updateItem(di, ii, "w", parseInt(e.target.value) || 1);
+          },
+          style: {
+            width: "32px",
+            background: "#0f172a",
+            border: "1px solid #334155",
+            borderRadius: "4px",
+            padding: "1px 3px",
+            color: "#fbbf24",
+            fontSize: "11px",
+            textAlign: "center"
+          }
+        }
+      ), /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function() {
+        removeItem(di, ii);
+      }, color: "#ef4444", borderColor: "#ef444444", fs: "10px" }, "✕")) : /* @__PURE__ */ React.createElement("span", null), !editMode && /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: "10px",
+        color: "#64748b",
+        background: "#1e293b",
+        padding: "1px 6px",
+        borderRadius: "4px",
+        position: "relative",
+        top: "-2px",
+        float: "right"
+      } }, "W", item.w)), /* @__PURE__ */ React.createElement(
+        ScoreGrid,
+        {
+          label: editMode ? null : item.name,
+          value: market[item.id] || 5,
+          onChange: function(v) {
+            sf("market", item.id, v);
+          }
+        }
+      ));
+    }), editMode && /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function() {
+      addItem(di);
+    }, color: "#818cf8", borderColor: "#818cf844", bg: "#818cf811" }, "+ 添加子项")));
+  }));
+}
+function Tab2Psychology(props) {
+  var data = props.data;
+  var sf = props.setField;
+  var psy = data.psy;
+  var rate = calcPsyRate(psy);
+  var pl = getPsyLabel(rate);
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "8px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "32px", fontWeight: 700, color: pl.color } }, (rate * 100).toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: pl.color, fontWeight: 600 } }, pl.text), /* @__PURE__ */ React.createElement("div", { style: { height: "8px", borderRadius: "4px", background: "#1e293b", marginTop: "10px", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: rate * 100 + "%", background: pl.color, borderRadius: "4px", transition: "width 0.4s" } })))), PSY_ITEMS.map(function(cat) {
+    return /* @__PURE__ */ React.createElement(Card, { key: cat.cat, title: cat.cat }, cat.items.map(function(it) {
+      return /* @__PURE__ */ React.createElement("div", { key: it.id, style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "10px",
+        padding: "10px 0",
+        borderBottom: "1px solid #1e293b"
+      } }, /* @__PURE__ */ React.createElement(
+        Toggle,
+        {
+          on: psy[it.id] || false,
+          onToggle: function() {
+            sf("psy", it.id, !psy[it.id]);
+          }
+        }
+      ), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", color: psy[it.id] ? "#e2e8f0" : "#94a3b8", fontWeight: 500 } }, it.text, /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: "10px",
+        color: "#64748b",
+        background: "#1e293b",
+        padding: "1px 6px",
+        borderRadius: "4px",
+        marginLeft: "6px"
+      } }, "W", it.w)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b", marginTop: "2px" } }, it.ref)));
+    }));
+  }));
+}
+function Tab3Edge(props) {
+  var data = props.data;
+  var sf = props.setField;
+  var edge = data.edge;
+  var confLabels = ["趋势方向Edge", "信息不对称Edge", "时机/催化剂Edge", "仓位结构Edge", "风险收益比Edge"];
+  var confCount = 0;
+  for (var i = 0; i < edge.conf.length; i++) {
+    if (edge.conf[i]) confCount++;
+  }
+  var totalProb = 0, ev = 0;
+  for (var i = 0; i < edge.scenarios.length; i++) {
+    var p = parseFloat(edge.scenarios[i].prob) || 0;
+    var pnl = parseFloat(edge.scenarios[i].pnl) || 0;
+    totalProb += p;
+    ev += p / 100 * pnl;
+  }
+  var probWarn = Math.abs(totalProb - 100) > 0.01;
+  var sNames = ["🐂 牛市", "📊 基准", "🐻 熊市", "🦢 黑天鹅"];
+  var sColors = ["#22c55e", "#3b82f6", "#f97316", "#ef4444"];
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Card, { title: "Edge置信度" }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "28px", fontWeight: 700, color: confCount >= 3 ? "#22c55e" : confCount >= 2 ? "#eab308" : "#ef4444" } }, confCount, "/5")), confLabels.map(function(lb, idx) {
+    return /* @__PURE__ */ React.createElement("div", { key: idx, style: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: "1px solid #1e293b" } }, /* @__PURE__ */ React.createElement(Toggle, { on: edge.conf[idx] || false, onToggle: function() {
+      var nc = [].concat(edge.conf);
+      nc[idx] = !nc[idx];
+      sf("edge", "conf", nc);
+    } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "13px", color: edge.conf[idx] ? "#e2e8f0" : "#64748b" } }, lb));
+  })), /* @__PURE__ */ React.createElement(Card, { title: "情景推演" }, sNames.map(function(sn, idx) {
+    var sc = edge.scenarios[idx];
+    return /* @__PURE__ */ React.createElement("div", { key: idx, style: {
+      marginBottom: "12px",
+      padding: "10px",
+      background: "#0f172a",
+      borderRadius: "8px",
+      border: "1px solid " + sColors[idx] + "33"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", fontWeight: 600, color: sColors[idx], marginBottom: "8px" } }, sn), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: "11px", color: "#64748b" } }, "概率 %"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "number",
+        value: sc.prob,
+        onChange: function(e) {
+          var ns = [].concat(edge.scenarios);
+          ns[idx] = Object.assign({}, ns[idx], { prob: e.target.value });
+          sf("edge", "scenarios", ns);
+        },
+        style: {
+          width: "100%",
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "6px",
+          padding: "6px 8px",
+          color: "#e2e8f0",
+          fontSize: "14px",
+          boxSizing: "border-box"
+        }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: "11px", color: "#64748b" } }, "预期盈亏 %"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "number",
+        value: sc.pnl,
+        onChange: function(e) {
+          var ns = [].concat(edge.scenarios);
+          ns[idx] = Object.assign({}, ns[idx], { pnl: e.target.value });
+          sf("edge", "scenarios", ns);
+        },
+        style: {
+          width: "100%",
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "6px",
+          padding: "6px 8px",
+          color: "#e2e8f0",
+          fontSize: "14px",
+          boxSizing: "border-box"
+        }
+      }
+    ))));
+  }), /* @__PURE__ */ React.createElement("div", { style: {
+    padding: "10px",
+    background: probWarn ? "#7f1d1d44" : "#0f2a1a",
+    borderRadius: "8px",
+    border: "1px solid " + (probWarn ? "#ef4444" : "#22c55e")
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "13px", color: "#94a3b8" } }, "概率总和"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: probWarn ? "#ef4444" : "#22c55e" } }, totalProb.toFixed(1), "% ", probWarn ? "⚠️" : "✓")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "13px", color: "#94a3b8" } }, "期望值 EV"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "18px", fontWeight: 700, color: ev >= 0 ? "#22c55e" : "#ef4444" } }, ev >= 0 ? "+" : "", ev.toFixed(2), "%")))));
+}
+function Tab4Position(props) {
+  var data = props.data;
+  var sf = props.setField;
+  var positions = data.positions;
+  var expandedArr = useState({});
+  var expanded = expandedArr[0];
+  var setExpanded = expandedArr[1];
+  var totalExp = 0, longExp = 0, shortExp = 0;
+  for (var i = 0; i < positions.length; i++) {
+    var r = parseFloat(positions[i].ratio) || 0;
+    totalExp += r;
+    if (positions[i].dir === "多") longExp += r;
+    else shortExp += r;
+  }
+  function updatePos(idx, key, val) {
+    var np = [];
+    for (var k = 0; k < positions.length; k++) {
+      if (k === idx) {
+        var p = Object.assign({}, positions[k]);
+        p[key] = val;
+        np.push(p);
+      } else np.push(positions[k]);
+    }
+    sf("positions", null, np);
+  }
+  function updateExit(idx, exitKey, val) {
+    var np = [];
+    for (var k = 0; k < positions.length; k++) {
+      if (k === idx) {
+        var p = Object.assign({}, positions[k]);
+        p.exits = Object.assign({}, p.exits || {});
+        p.exits[exitKey] = val;
+        np.push(p);
+      } else np.push(positions[k]);
+    }
+    sf("positions", null, np);
+  }
+  function addPos() {
+    var np = [].concat(positions);
+    np.push(makeEmptyPos());
+    sf("positions", null, np);
+  }
+  function removePos(idx) {
+    if (positions.length <= 1) return;
+    var np = [];
+    for (var k = 0; k < positions.length; k++) {
+      if (k !== idx) np.push(positions[k]);
+    }
+    sf("positions", null, np);
+  }
+  function toggleExpand(idx) {
+    var next = Object.assign({}, expanded);
+    if (next[idx]) {
+      delete next[idx];
+    } else {
+      next[idx] = true;
+    }
+    setExpanded(next);
+  }
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, textAlign: "center", padding: "8px", background: "#0f172a", borderRadius: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "总敞口"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: totalExp > 100 ? "#ef4444" : "#e2e8f0" } }, totalExp, "%")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, textAlign: "center", padding: "8px", background: "#0f172a", borderRadius: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "多头"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: "#22c55e" } }, longExp, "%")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, textAlign: "center", padding: "8px", background: "#0f172a", borderRadius: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "空头"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: "#ef4444" } }, shortExp, "%")))), positions.map(function(pos, idx) {
+    var isExp = expanded[idx];
+    var hasTarget = pos.target && pos.target.trim();
+    var exitCount = 0;
+    if (pos.exits) {
+      for (var ek = 0; ek < EXIT_LABELS.length; ek++) {
+        if (pos.exits[EXIT_LABELS[ek].key]) exitCount++;
+      }
+    }
+    return /* @__PURE__ */ React.createElement(Card, { key: idx }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px", alignItems: "center", marginBottom: isExp ? "10px" : "0" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", color: pos.dir === "多" ? "#22c55e" : "#ef4444", fontWeight: 700, width: "16px" } }, "#", idx + 1), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "标的",
+        value: pos.target,
+        onChange: function(e) {
+          updatePos(idx, "target", e.target.value);
+        },
+        style: {
+          flex: 2,
+          background: "#0f172a",
+          border: "1px solid #334155",
+          borderRadius: "6px",
+          padding: "7px 8px",
+          color: "#e2e8f0",
+          fontSize: "13px",
+          fontWeight: 600,
+          minWidth: 0
+        }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: pos.dir,
+        onChange: function(e) {
+          updatePos(idx, "dir", e.target.value);
+        },
+        style: {
+          width: "48px",
+          background: "#0f172a",
+          border: "1px solid #334155",
+          borderRadius: "6px",
+          padding: "7px 2px",
+          color: pos.dir === "多" ? "#22c55e" : "#ef4444",
+          fontSize: "12px",
+          fontWeight: 600
+        }
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "多" }, "多"),
+      /* @__PURE__ */ React.createElement("option", { value: "空" }, "空")
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "%",
+        value: pos.ratio,
+        type: "number",
+        onChange: function(e) {
+          updatePos(idx, "ratio", e.target.value);
+        },
+        style: {
+          width: "50px",
+          background: "#0f172a",
+          border: "1px solid #334155",
+          borderRadius: "6px",
+          padding: "7px 4px",
+          color: "#e2e8f0",
+          fontSize: "13px",
+          textAlign: "center"
+        }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px", marginTop: isExp ? "0" : "6px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "驱动因子/入场逻辑",
+        value: pos.driver,
+        onChange: function(e) {
+          updatePos(idx, "driver", e.target.value);
+        },
+        style: {
+          flex: 1,
+          background: "#0f172a",
+          border: "1px solid #1e293b",
+          borderRadius: "6px",
+          padding: "6px 8px",
+          color: "#94a3b8",
+          fontSize: "12px",
+          minWidth: 0
+        }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: function() {
+          toggleExpand(idx);
+        },
+        style: {
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          padding: "4px 0",
+          color: isExp ? "#818cf8" : "#475569",
+          fontSize: "12px",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px"
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { style: { transition: "transform 0.2s", transform: isExp ? "rotate(90deg)" : "rotate(0)", display: "inline-block" } }, "▸"),
+      "退出策略 ",
+      exitCount > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: "#64748b" } }, "(", exitCount, "/6)")
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "4px" } }, positions.length > 1 && /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function() {
+      removePos(idx);
+    }, color: "#ef4444", borderColor: "#ef444444", fs: "10px" }, "删除"))), isExp && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "8px", paddingTop: "8px", borderTop: "1px solid #1e293b" } }, EXIT_LABELS.map(function(ex) {
+      var val = pos.exits && pos.exits[ex.key] || "";
+      return /* @__PURE__ */ React.createElement("div", { key: ex.key, style: { marginBottom: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "12px", color: "#cbd5e1", marginBottom: "3px" } }, ex.icon, " ", ex.name), /* @__PURE__ */ React.createElement(
+        "textarea",
+        {
+          value: val,
+          onChange: function(e) {
+            updateExit(idx, ex.key, e.target.value);
+          },
+          rows: 1,
+          placeholder: "设定" + ex.name + "...",
+          style: {
+            width: "100%",
+            background: "#0f172a",
+            border: "1px solid #1e293b",
+            borderRadius: "6px",
+            padding: "6px 8px",
+            color: "#e2e8f0",
+            fontSize: "12px",
+            resize: "vertical",
+            boxSizing: "border-box"
+          }
+        }
+      ));
+    })));
+  }), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: "4px" } }, /* @__PURE__ */ React.createElement(MiniBtn, { onClick: addPos, color: "#22c55e", borderColor: "#22c55e44", bg: "#22c55e11", pad: "6px 16px" }, "+ 添加持仓")));
+}
+function Tab5Sizing(props) {
+  var data = props.data;
+  var sf = props.setField;
+  var opps = data.opps;
+  var kelly = data.kelly;
+  function oppScore(o) {
+    return (o.edge * 0.4 + o.cert * 0.3 + o.reward * 0.3).toFixed(1);
+  }
+  function sizeLabel(s) {
+    var n = parseFloat(s);
+    if (n >= 8) return { text: "重仓", color: "#22c55e" };
+    if (n >= 6) return { text: "标准仓", color: "#3b82f6" };
+    if (n >= 4) return { text: "轻仓", color: "#eab308" };
+    return { text: "观望", color: "#ef4444" };
+  }
+  var w = (parseFloat(kelly.w) || 0) / 100;
+  var r = parseFloat(kelly.r) || 0;
+  var kellyFull = r > 0 ? w - (1 - w) / r : 0;
+  var kellyQ = Math.max(0, kellyFull * 0.25);
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Card, { title: "候选机会评分" }, opps.map(function(opp, idx) {
+    var sc = oppScore(opp);
+    var sl = sizeLabel(sc);
+    return /* @__PURE__ */ React.createElement("div", { key: idx, style: { marginBottom: "14px", padding: "10px", background: "#0f172a", borderRadius: "8px", border: "1px solid #1e293b" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "机会 #" + (idx + 1),
+        value: opp.name,
+        onChange: function(e) {
+          var no = [].concat(opps);
+          no[idx] = Object.assign({}, no[idx], { name: e.target.value });
+          sf("opps", null, no);
+        },
+        style: { background: "transparent", border: "none", color: "#e2e8f0", fontSize: "14px", fontWeight: 600, outline: "none", flex: 1 }
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "16px", fontWeight: 700, color: sl.color } }, sc), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", color: sl.color } }, sl.text))), /* @__PURE__ */ React.createElement(
+      ScoreGrid,
+      {
+        label: "Edge优势",
+        value: opp.edge,
+        onChange: function(v) {
+          var no = [].concat(opps);
+          no[idx] = Object.assign({}, no[idx], { edge: v });
+          sf("opps", null, no);
+        }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      ScoreGrid,
+      {
+        label: "确定性",
+        value: opp.cert,
+        onChange: function(v) {
+          var no = [].concat(opps);
+          no[idx] = Object.assign({}, no[idx], { cert: v });
+          sf("opps", null, no);
+        }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      ScoreGrid,
+      {
+        label: "回报潜力",
+        value: opp.reward,
+        onChange: function(v) {
+          var no = [].concat(opps);
+          no[idx] = Object.assign({}, no[idx], { reward: v });
+          sf("opps", null, no);
+        }
+      }
+    ));
+  })), /* @__PURE__ */ React.createElement(Card, { title: "Kelly公式计算器" }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px", background: "#0f172a", borderRadius: "8px", marginBottom: "12px", textAlign: "center", fontSize: "12px", color: "#64748b" } }, "f* = W − (1−W)/R → 建议仓位 = ¼ Kelly"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "10px", marginBottom: "12px" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: "12px", color: "#94a3b8" } }, "胜率 W (%)"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      value: kelly.w,
+      onChange: function(e) {
+        sf("kelly", null, Object.assign({}, kelly, { w: e.target.value }));
+      },
+      style: {
+        width: "100%",
+        background: "#0f172a",
+        border: "1px solid #334155",
+        borderRadius: "6px",
+        padding: "8px",
+        color: "#e2e8f0",
+        fontSize: "16px",
+        boxSizing: "border-box"
+      }
+    }
+  )), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: "12px", color: "#94a3b8" } }, "盈亏比 R"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      step: "0.1",
+      value: kelly.r,
+      onChange: function(e) {
+        sf("kelly", null, Object.assign({}, kelly, { r: e.target.value }));
+      },
+      style: {
+        width: "100%",
+        background: "#0f172a",
+        border: "1px solid #334155",
+        borderRadius: "6px",
+        padding: "8px",
+        color: "#e2e8f0",
+        fontSize: "16px",
+        boxSizing: "border-box"
+      }
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "12px", background: "#1e293b", borderRadius: "8px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "Full Kelly"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: 700, color: kellyFull > 0 ? "#3b82f6" : "#ef4444" } }, (kellyFull * 100).toFixed(1), "%")), /* @__PURE__ */ React.createElement("div", { style: {
+    flex: 1,
+    padding: "12px",
+    background: kellyQ > 0 ? "#0f2a1a" : "#1e293b",
+    borderRadius: "8px",
+    textAlign: "center",
+    border: "1px solid " + (kellyQ > 0 ? "#22c55e44" : "#1e293b")
+  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "¼ Kelly 建议"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: 700, color: kellyQ > 0 ? "#22c55e" : "#ef4444" } }, (kellyQ * 100).toFixed(1), "%")))));
+}
+function Tab6Review(props) {
+  var data = props.data;
+  var sf = props.setField;
+  var sessions = data.reviewSessions || [];
+  var activeIdx = data.activeSession || 0;
+  if (activeIdx >= sessions.length) activeIdx = sessions.length - 1;
+  if (activeIdx < 0) activeIdx = 0;
+  var sess = sessions[activeIdx] || makeEmptySession();
+  var viewArr = useState("current");
+  var view = viewArr[0];
+  var setView = viewArr[1];
+  function updateSession(key, val) {
+    var ns = [];
+    for (var i2 = 0; i2 < sessions.length; i2++) {
+      if (i2 === activeIdx) {
+        var s = Object.assign({}, sessions[i2]);
+        s[key] = val;
+        ns.push(s);
+      } else ns.push(sessions[i2]);
+    }
+    sf("reviewSessions", null, ns);
+  }
+  function addSession() {
+    var ns = [].concat(sessions);
+    ns.push(makeEmptySession());
+    sf("reviewSessions", null, ns);
+    sf("activeSession", null, ns.length - 1);
+    setView("current");
+  }
+  function deleteSession(idx) {
+    if (sessions.length <= 1) return;
+    if (!confirm("删除这条复盘记录？")) return;
+    var ns = [];
+    for (var i2 = 0; i2 < sessions.length; i2++) {
+      if (i2 !== idx) ns.push(sessions[i2]);
+    }
+    sf("reviewSessions", null, ns);
+    var newActive = Math.min(activeIdx, ns.length - 1);
+    sf("activeSession", null, newActive);
+  }
+  function selectSession(idx) {
+    sf("activeSession", null, idx);
+    setView("current");
+  }
+  function addTrade() {
+    var nt = [].concat(sess.trades);
+    nt.push({ date: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), target: "", dir: "多", entry: "", exit: "", tag: "系统内盈利" });
+    updateSession("trades", nt);
+  }
+  function removeTrade(idx) {
+    var nt = [].concat(sess.trades);
+    nt.splice(idx, 1);
+    updateSession("trades", nt);
+  }
+  function updateTrade(idx, key, val) {
+    var nt = [].concat(sess.trades);
+    nt[idx] = Object.assign({}, nt[idx]);
+    nt[idx][key] = val;
+    updateSession("trades", nt);
+  }
+  function updateReview(key, val) {
+    var nr = Object.assign({}, sess.review);
+    nr[key] = val;
+    updateSession("review", nr);
+  }
+  var trades = sess.trades || [];
+  var totalT = trades.length;
+  var winC = 0, outC = 0;
+  for (var i = 0; i < trades.length; i++) {
+    var t = trades[i];
+    var en = parseFloat(t.entry) || 0;
+    var ex = parseFloat(t.exit) || 0;
+    if (en > 0 && ex > 0) {
+      var pnl = t.dir === "多" ? (ex - en) / en : (en - ex) / en;
+      if (pnl > 0) winC++;
+    }
+    if (t.tag === "系统外盈利" || t.tag === "系统外亏损" || t.tag === "FOMO" || t.tag === "报复交易") outC++;
+  }
+  var winRate = totalT > 0 ? (winC / totalT * 100).toFixed(1) : "0.0";
+  var outRate = totalT > 0 ? (outC / totalT * 100).toFixed(1) : "0.0";
+  if (view === "list") {
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: "#e2e8f0" } }, "复盘记录 (", sessions.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px" } }, /* @__PURE__ */ React.createElement(MiniBtn, { onClick: addSession, color: "#22c55e", borderColor: "#22c55e44", bg: "#22c55e11" }, "+ 新建"), /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function() {
+      setView("current");
+    }, color: "#818cf8", borderColor: "#818cf844" }, "← 返回"))), sessions.map(function(s, idx) {
+      var isActive = idx === activeIdx;
+      var tc = (s.trades || []).length;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: s.id || idx,
+          onClick: function() {
+            selectSession(idx);
+          },
+          style: {
+            padding: "10px",
+            background: isActive ? "#818cf811" : "#0f172a",
+            borderRadius: "8px",
+            marginBottom: "6px",
+            cursor: "pointer",
+            border: "1px solid " + (isActive ? "#818cf844" : "#1e293b"),
+            transition: "all 0.15s"
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", fontWeight: 600, color: isActive ? "#c7d2fe" : "#e2e8f0" } }, s.title || s.date || "未命名"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b", marginTop: "2px" } }, s.date, " · ", tc, "笔交易")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "6px" } }, isActive && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "10px", color: "#818cf8", background: "#818cf822", padding: "2px 6px", borderRadius: "4px" } }, "当前"), sessions.length > 1 && /* @__PURE__ */ React.createElement(
+          MiniBtn,
+          {
+            onClick: function(e) {
+              e.stopPropagation();
+              deleteSession(idx);
+            },
+            color: "#ef4444",
+            borderColor: "#ef444444",
+            fs: "10px"
+          },
+          "删"
+        )))
+      );
+    })));
+  }
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "6px", flex: 1 } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      value: sess.title || "",
+      placeholder: "复盘标题...",
+      onChange: function(e) {
+        updateSession("title", e.target.value);
+      },
+      style: {
+        background: "transparent",
+        border: "none",
+        color: "#e2e8f0",
+        fontSize: "15px",
+        fontWeight: 700,
+        outline: "none",
+        flex: 1,
+        padding: 0
+      }
+    }
+  )), /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function() {
+    setView("list");
+  }, color: "#818cf8", borderColor: "#818cf844" }, "📋 ", sessions.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "date",
+      value: sess.date,
+      onChange: function(e) {
+        updateSession("date", e.target.value);
+      },
+      style: {
+        background: "#0f172a",
+        border: "1px solid #1e293b",
+        borderRadius: "5px",
+        padding: "4px 8px",
+        color: "#94a3b8",
+        fontSize: "12px"
+      }
+    }
+  ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "11px", color: "#475569" } }, "第 ", activeIdx + 1, "/", sessions.length, " 条"))), /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, textAlign: "center", padding: "8px", background: "#0f172a", borderRadius: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "交易次数"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: "#e2e8f0" } }, totalT)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, textAlign: "center", padding: "8px", background: "#0f172a", borderRadius: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "胜率"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: "#22c55e" } }, winRate, "%")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, textAlign: "center", padding: "8px", background: "#0f172a", borderRadius: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#64748b" } }, "系统外"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: 700, color: parseFloat(outRate) > 30 ? "#ef4444" : "#eab308" } }, outRate, "%")))), /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: "#e2e8f0" } }, "交易日志"), /* @__PURE__ */ React.createElement(MiniBtn, { onClick: addTrade, color: "#22c55e", borderColor: "#22c55e44", bg: "#22c55e11" }, "+ 添加")), trades.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", color: "#475569", padding: "16px", fontSize: "13px" } }, "暂无交易记录"), trades.map(function(tr, idx) {
+    var en2 = parseFloat(tr.entry) || 0;
+    var ex2 = parseFloat(tr.exit) || 0;
+    var pnlStr = "";
+    var pnlC = "#64748b";
+    if (en2 > 0 && ex2 > 0) {
+      var raw = tr.dir === "多" ? (ex2 - en2) / en2 * 100 : (en2 - ex2) / en2 * 100;
+      pnlStr = (raw >= 0 ? "+" : "") + raw.toFixed(2) + "%";
+      pnlC = raw >= 0 ? "#22c55e" : "#ef4444";
+    }
+    return /* @__PURE__ */ React.createElement("div", { key: idx, style: { padding: "10px", background: "#0f172a", borderRadius: "8px", marginBottom: "6px", border: "1px solid #1e293b" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "date",
+        value: tr.date,
+        onChange: function(e) {
+          updateTrade(idx, "date", e.target.value);
+        },
+        style: {
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "4px",
+          padding: "3px 6px",
+          color: "#e2e8f0",
+          fontSize: "11px"
+        }
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "6px" } }, pnlStr && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: pnlC } }, pnlStr), /* @__PURE__ */ React.createElement(MiniBtn, { onClick: function() {
+      removeTrade(idx);
+    }, color: "#ef4444", borderColor: "#ef444444", fs: "10px" }, "✕"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "5px", marginBottom: "5px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "标的",
+        value: tr.target,
+        onChange: function(e) {
+          updateTrade(idx, "target", e.target.value);
+        },
+        style: {
+          flex: 2,
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "4px",
+          padding: "5px 6px",
+          color: "#e2e8f0",
+          fontSize: "12px",
+          minWidth: 0
+        }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: tr.dir,
+        onChange: function(e) {
+          updateTrade(idx, "dir", e.target.value);
+        },
+        style: {
+          width: "44px",
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "4px",
+          padding: "5px 2px",
+          color: tr.dir === "多" ? "#22c55e" : "#ef4444",
+          fontSize: "12px"
+        }
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "多" }, "多"),
+      /* @__PURE__ */ React.createElement("option", { value: "空" }, "空")
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "入场",
+        value: tr.entry,
+        type: "number",
+        onChange: function(e) {
+          updateTrade(idx, "entry", e.target.value);
+        },
+        style: {
+          flex: 1,
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "4px",
+          padding: "5px 6px",
+          color: "#e2e8f0",
+          fontSize: "12px",
+          minWidth: 0
+        }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        placeholder: "出场",
+        value: tr.exit,
+        type: "number",
+        onChange: function(e) {
+          updateTrade(idx, "exit", e.target.value);
+        },
+        style: {
+          flex: 1,
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "4px",
+          padding: "5px 6px",
+          color: "#e2e8f0",
+          fontSize: "12px",
+          minWidth: 0
+        }
+      }
+    )), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: tr.tag,
+        onChange: function(e) {
+          updateTrade(idx, "tag", e.target.value);
+        },
+        style: {
+          width: "100%",
+          background: "#1e293b",
+          border: "1px solid #334155",
+          borderRadius: "4px",
+          padding: "5px 6px",
+          color: "#cbd5e1",
+          fontSize: "12px"
+        }
+      },
+      TRADE_TAGS.map(function(tg) {
+        return /* @__PURE__ */ React.createElement("option", { key: tg, value: tg }, tg);
+      })
+    ));
+  })), /* @__PURE__ */ React.createElement(Card, { title: "深度复盘" }, REVIEW_QS.map(function(q, idx) {
+    var key = "q" + idx;
+    return /* @__PURE__ */ React.createElement("div", { key: idx, style: { marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", color: "#cbd5e1", marginBottom: "4px" } }, q), /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: sess.review && sess.review[key] || "",
+        placeholder: "写下你的思考...",
+        onChange: function(e) {
+          updateReview(key, e.target.value);
+        },
+        rows: 3,
+        style: {
+          width: "100%",
+          background: "#0f172a",
+          border: "1px solid #334155",
+          borderRadius: "8px",
+          padding: "8px",
+          color: "#e2e8f0",
+          fontSize: "13px",
+          resize: "vertical",
+          boxSizing: "border-box"
+        }
+      }
+    ));
+  })));
+}
+var TAB_LABELS = ["市场", "心理", "Edge", "持仓", "仓位", "复盘"];
+var TAB_ICONS = ["📊", "🧠", "🎯", "💼", "⚖️", "📝"];
+function App() {
+  var defaultData = getDefault();
+  var stateArr = useState(defaultData);
+  var data = stateArr[0];
+  var setData = stateArr[1];
+  var tabArr = useState(0);
+  var tab = tabArr[0];
+  var setTab = tabArr[1];
+  var loadedArr = useState(false);
+  var loaded = loadedArr[0];
+  var setLoaded = loadedArr[1];
+  var saveTimer = useRef(null);
+  useEffect(function() {
+    try {
+      ___storage.get(STORAGE_KEY).then(function(result) {
+        if (result && result.value) {
+          try {
+            var parsed = JSON.parse(result.value);
+            var merged = Object.assign({}, defaultData, parsed);
+            if (!merged.dims || merged.dims.length === 0) merged.dims = getDefaultDims();
+            merged.market = Object.assign({}, defaultData.market, parsed.market || {});
+            merged.psy = Object.assign({}, defaultData.psy, parsed.psy || {});
+            merged.edge = Object.assign({}, defaultData.edge, parsed.edge || {});
+            merged.kelly = Object.assign({}, defaultData.kelly, parsed.kelly || {});
+            if (!merged.reviewSessions) merged.reviewSessions = [makeEmptySession()];
+            if (!merged.positions) merged.positions = [makeEmptyPos()];
+            for (var pi = 0; pi < merged.positions.length; pi++) {
+              if (!merged.positions[pi].exits) {
+                merged.positions[pi].exits = { hard: "", thesis: "", tp1: "", tp2: "", time: "", emergency: "" };
+              }
+            }
+            setData(merged);
+          } catch (e) {
+          }
+        }
+        setLoaded(true);
+      }).catch(function() {
+        setLoaded(true);
+      });
+    } catch (e) {
+      setLoaded(true);
+    }
+  }, []);
+  function saveData(newData) {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(function() {
+      try {
+        ___storage.set(STORAGE_KEY, JSON.stringify(newData)).catch(function() {
+        });
+      } catch (e) {
+      }
+    }, 400);
+  }
+  function setField(section, key, value) {
+    setData(function(prev) {
+      var next = Object.assign({}, prev);
+      if (key !== null && key !== void 0) {
+        var sub = Object.assign({}, prev[section] || {});
+        sub[key] = value;
+        next[section] = sub;
+      } else {
+        next[section] = value;
+      }
+      saveData(next);
+      return next;
+    });
+  }
+  function handleReset() {
+    if (confirm("确定要重置所有数据吗？此操作不可撤销。")) {
+      var fresh = getDefault();
+      setData(fresh);
+      try {
+        ___storage.set(STORAGE_KEY, JSON.stringify(fresh)).catch(function() {
+        });
+      } catch (e) {
+      }
+    }
+  }
+  var dims = data.dims || getDefaultDims();
+  var mScore = calcOverall(dims, data.market);
+  var psyRate = calcPsyRate(data.psy);
+  var ml = getMarketLabel(mScore);
+  var pl = getPsyLabel(psyRate);
+  var canExec = mScore >= 6 && psyRate >= 0.8;
+  var caution = mScore >= 4.5 && psyRate >= 0.6 && !canExec;
+  var statusColor = canExec ? "#22c55e" : caution ? "#eab308" : "#ef4444";
+  var statusText = canExec ? "可执行" : caution ? "谨慎" : "不可执行";
+  if (!loaded) {
+    return /* @__PURE__ */ React.createElement("div", { style: {
+      background: "#0a0f1a",
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#64748b",
+      fontFamily: "-apple-system,system-ui,sans-serif"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "24px", marginBottom: "8px" } }, "⏳"), /* @__PURE__ */ React.createElement("div", null, "加载中...")));
+  }
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    background: "#0a0f1a",
+    minHeight: "100vh",
+    maxWidth: "480px",
+    margin: "0 auto",
+    fontFamily: "-apple-system,system-ui,sans-serif",
+    color: "#e2e8f0",
+    position: "relative",
+    paddingBottom: "70px"
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+    background: "#0a0f1aee",
+    backdropFilter: "blur(12px)",
+    borderBottom: "1px solid #1e293b",
+    padding: "10px 16px"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "5px",
+    background: statusColor,
+    boxShadow: "0 0 8px " + statusColor
+  } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: 700, color: statusColor } }, statusText)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "12px", fontSize: "12px" } }, /* @__PURE__ */ React.createElement("span", { style: { color: ml.color } }, "市场 ", mScore.toFixed(1)), /* @__PURE__ */ React.createElement("span", { style: { color: pl.color } }, "心理 ", (psyRate * 100).toFixed(0), "%")))), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 12px 0" } }, tab === 0 && /* @__PURE__ */ React.createElement(Tab1Market, { data, setField }), tab === 1 && /* @__PURE__ */ React.createElement(Tab2Psychology, { data, setField }), tab === 2 && /* @__PURE__ */ React.createElement(Tab3Edge, { data, setField }), tab === 3 && /* @__PURE__ */ React.createElement(Tab4Position, { data, setField }), tab === 4 && /* @__PURE__ */ React.createElement(Tab5Sizing, { data, setField }), tab === 5 && /* @__PURE__ */ React.createElement(Tab6Review, { data, setField })), /* @__PURE__ */ React.createElement("button", { onClick: handleReset, style: {
+    position: "fixed",
+    bottom: "70px",
+    right: "max(12px, calc((100vw - 480px)/2 + 12px))",
+    width: "44px",
+    height: "44px",
+    borderRadius: "22px",
+    background: "#1e293b",
+    border: "1px solid #334155",
+    color: "#94a3b8",
+    fontSize: "20px",
+    cursor: "pointer",
+    zIndex: 100,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.4)"
+  }, title: "重置" }, "🔄"), /* @__PURE__ */ React.createElement("div", { style: {
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "#0a0f1aee",
+    backdropFilter: "blur(12px)",
+    borderTop: "1px solid #1e293b",
+    zIndex: 100,
+    display: "flex",
+    justifyContent: "center"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", maxWidth: "480px", width: "100%" } }, TAB_LABELS.map(function(lb, idx) {
+    var isActive = tab === idx;
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: idx,
+        onClick: function() {
+          setTab(idx);
+        },
+        style: {
+          flex: 1,
+          padding: "8px 0",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "2px",
+          color: isActive ? "#6366f1" : "#64748b",
+          borderTop: isActive ? "2px solid #6366f1" : "2px solid transparent",
+          transition: "all 0.2s"
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: "18px" } }, TAB_ICONS[idx]),
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: "10px", fontWeight: isActive ? 700 : 400 } }, lb)
+    );
+  }))), /* @__PURE__ */ React.createElement("style", null, "\n        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }\n        input, textarea, select { outline: none; font-family: inherit; }\n        button { font-family: inherit; }\n        select option { background: #1e293b; color: #e2e8f0; }\n        ::-webkit-scrollbar { width: 4px; }\n        ::-webkit-scrollbar-track { background: transparent; }\n        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }\n        @media (max-width: 480px) { body { margin: 0; } }\n      "));
+}
+
+  window.App = App;
+}
+</script>
+
+<script>
+// Register Service Worker for offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(function(reg) {
+    console.log('SW registered');
+    // Check for updates every 30 minutes
+    setInterval(function() { reg.update(); }, 1800000);
+  }).catch(function(err) {
+    console.log('SW registration failed:', err);
+  });
+}
+// Show offline indicator
+window.addEventListener('online', function() {
+  var el = document.getElementById('offline-badge');
+  if (el) el.style.display = 'none';
+});
+window.addEventListener('offline', function() {
+  var el = document.getElementById('offline-badge');
+  if (el) el.style.display = 'block';
+});
+if (!navigator.onLine) {
+  var el = document.getElementById('offline-badge');
+  if (el) el.style.display = 'block';
+}
+</script>
+
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "67fe73834d7b4e2f99f61179f98812ce"}'></script><!-- End Cloudflare Web Analytics -->
+
+</body>
+</html>
