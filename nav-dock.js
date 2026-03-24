@@ -1,106 +1,52 @@
 /**
- * TradeFi Navigation Dock v2.0
- * 工程级版本：自适应高度 + 防重复注入 + 无布局抖动
+ * TradeFi Navigation Dock v1.0
+ * 在任意页面底部注入浮动导航栏，串联所有工具
+ * 用法：在每个 HTML 末尾加 <script src="nav-dock.js"></script>
  */
-(function () {
-  // 🛑 防止重复注入
-  if (document.getElementById('tradefi-dock')) return;
-
-  // 1️⃣ 页面配置
+(function() {
   var PAGES = [
-    { id: 'trading', label: '交易系统', icon: '📊', href: './index.html' },
-    { id: 'chronicle', label: '编年史', icon: '◆', href: './TradeFiCalendar.html' },
-    { id: 'fundamental', label: '基本面', icon: '📈', href: './fundamental.html' }
+    { id: 'trading',     label: '交易系统',   icon: '📊', href: './index.html' },
+    { id: 'chronicle',   label: '编年史',     icon: '◆',  href: './TradeFiCalendar.html' },
+    { id: 'fundamental', label: '基本面',     icon: '📈', href: './fundamental.html' }
   ];
 
-  // 2️⃣ 当前页面判断（更稳）
+  // Detect current page
   var path = location.pathname.toLowerCase();
-  var current = PAGES.find(p => path.includes(p.id))?.id || 'trading';
+  var current = 'trading';
+  if (path.indexOf('tradeficalendar') !== -1 || path.indexOf('calendar') !== -1) current = 'chronicle';
+  else if (path.indexOf('fundamental') !== -1) current = 'fundamental';
+  else if (path.indexOf('index') !== -1 || path.endsWith('/')) current = 'trading';
 
-  // 3️⃣ 注入 CSS（先注入避免闪动）
+  // Inject CSS
   var style = document.createElement('style');
-  style.textContent = `
-    #tradefi-dock {
-      position: fixed;
-      bottom: 12px;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      z-index: 99999;
-      pointer-events: none;
-    }
-
-    #tradefi-dock .dk {
-      display: flex;
-      gap: 4px;
-      padding: 6px;
-      background: rgba(18,18,26,0.88);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.12);
-      pointer-events: auto;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    }
-
-    #tradefi-dock a {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      padding: 8px 16px;
-      border-radius: 14px;
-      text-decoration: none;
-      color: #64748b;
-      font-size: 11px;
-      min-width: 68px;
-      transition: all .2s ease;
-    }
-
-    #tradefi-dock a .ic {
-      font-size: 20px;
-    }
-
-    #tradefi-dock a.active {
-      color: #f59e0b;
-      background: rgba(245,158,11,0.12);
-    }
-
-    #tradefi-dock a:active {
-      transform: scale(0.9);
-    }
-  `;
+  style.textContent = [
+    '#tradefi-dock{position:fixed;bottom:0;left:0;right:0;z-index:9998;display:flex;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0);pointer-events:none}',
+    '#tradefi-dock .dk{display:flex;gap:2px;padding:4px;margin:8px;border-radius:14px;background:rgba(10,15,26,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);pointer-events:auto;box-shadow:0 4px 24px rgba(0,0,0,.5)}',
+    '#tradefi-dock a{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 18px;border-radius:10px;text-decoration:none;color:#64748b;font-size:10px;font-family:"Noto Sans SC",system-ui,sans-serif;transition:all .2s;min-width:64px}',
+    '#tradefi-dock a .ic{font-size:18px;line-height:1.2}',
+    '#tradefi-dock a:hover{color:#e2e8f0;background:rgba(255,255,255,.06)}',
+    '#tradefi-dock a.active{color:#f59e0b;background:rgba(245,158,11,.1)}',
+    '#tradefi-dock a.active .ic{filter:drop-shadow(0 0 4px rgba(245,158,11,.4))}',
+    '@media(max-width:400px){#tradefi-dock a{padding:6px 14px;min-width:56px}}'
+  ].join('\n');
   document.head.appendChild(style);
 
-  // 4️⃣ 创建 Dock
+  // Inject HTML
   var dock = document.createElement('div');
   dock.id = 'tradefi-dock';
+  var inner = '<div class="dk">';
+  for (var i = 0; i < PAGES.length; i++) {
+    var p = PAGES[i];
+    inner += '<a href="' + p.href + '" class="' + (p.id === current ? 'active' : '') + '">';
+    inner += '<span class="ic">' + p.icon + '</span>';
+    inner += '<span>' + p.label + '</span></a>';
+  }
+  inner += '</div>';
+  dock.innerHTML = inner;
+  document.body.appendChild(dock);
 
-  var html = '<div class="dk">';
-  PAGES.forEach(function (p) {
-    html += `
-      <a href="${p.href}" class="${p.id === current ? 'active' : ''}">
-        <span class="ic">${p.icon}</span>
-        <span>${p.label}</span>
-      </a>
-    `;
-  });
-  html += '</div>';
-
-  dock.innerHTML = html;
-
-  // 5️⃣ 插入 DOM（尽早）
-  document.addEventListener('DOMContentLoaded', function () {
-    document.body.appendChild(dock);
-
-    // 6️⃣ ✅ 动态计算 Dock 高度（关键升级）
-    requestAnimationFrame(function () {
-      var height = dock.offsetHeight;
-
-      document.body.style.paddingBottom =
-        `calc(${height + 16}px + env(safe-area-inset-bottom))`;
-    });
-  });
-
+  // Add bottom padding to body so content isn't hidden behind dock
+  var pad = document.createElement('div');
+  pad.style.height = '72px';
+  document.body.appendChild(pad);
 })();
