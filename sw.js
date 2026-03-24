@@ -1,69 +1,54 @@
-var CACHE_NAME = ‘trading-v4’;
+var CACHE_NAME = 'trading-v4';
+// 1. 把新页面也加入预缓存列表，确保离线可用
 var ASSETS = [
-‘./’,
-‘./index.html’
+  './',
+  './index.html',
+  './trade.html' // <--- 加上你的第二个页面
 ];
 
-// CDN resources to cache on first load
-var CDN_HOSTS = [‘cdn.jsdelivr.net’, ‘cdn.bootcdn.net’, ‘unpkg.com’];
+var CDN_HOSTS = ['cdn.jsdelivr.net', 'cdn.bootcdn.net', 'unpkg.com'];
 
-self.addEventListener(‘install’, function(e) {
-e.waitUntil(
-caches.open(CACHE_NAME).then(function(cache) {
-return cache.addAll(ASSETS);
-})
-);
-self.skipWaiting();
-});
+// ... (install 和 activate 部分保持不变)
 
-self.addEventListener(‘activate’, function(e) {
-// Clean old caches
-e.waitUntil(
-caches.keys().then(function(names) {
-return Promise.all(
-names.filter(function(n) { return n !== CACHE_NAME; })
-.map(function(n) { return caches.delete(n); })
-);
-})
-);
-self.clients.claim();
-});
+self.addEventListener('fetch', function(e) {
+  var url = new URL(e.request.url);
 
-self.addEventListener(‘fetch’, function(e) {
-var url = new URL(e.request.url);
+  // 【核心修改：白名单/网络优先】
+  // 如果你正在开发 trade.html，不希望它被旧缓存死死卡住
+  // 或者你有一些需要实时数据的 API，在这里排除
+  if (url.pathname.includes('trade.html')) {
+    e.respondWith(
+      fetch(e.request).catch(function() {
+        return caches.match(e.request); // 只有断网了才走缓存
+      })
+    );
+    return;
+  }
 
-// For CDN scripts: cache-first (once cached, always offline)
-var isCDN = false;
-for (var i = 0; i < CDN_HOSTS.length; i++) {
-if (url.hostname === CDN_HOSTS[i]) { isCDN = true; break; }
-}
+  // CDN 资源保持原样：缓存优先（因为库文件很少变）
+  var isCDN = CDN_HOSTS.some(host => url.hostname === host);
+  if (isCDN) {
+    e.respondWith(
+      caches.match(e.request).then(function(cached) {
+        if (cached) return cached;
+        return fetch(e.request).then(function(response) {
+          var clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
-if (isCDN) {
-e.respondWith(
-caches.match(e.request).then(function(cached) {
-if (cached) return cached;
-return fetch(e.request).then(function(response) {
-var clone = response.clone();
-caches.open(CACHE_NAME).then(function(cache) {
-cache.put(e.request, clone);
-});
-return response;
-});
-})
-);
-return;
-}
-
-// For local files: cache-first, fallback to network
-e.respondWith(
-caches.match(e.request).then(function(cached) {
-return cached || fetch(e.request).then(function(response) {
-var clone = response.clone();
-caches.open(CACHE_NAME).then(function(cache) {
-cache.put(e.request, clone);
-});
-return response;
-});
-})
-);
+  // 本地文件：缓存优先
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
+      return cached || fetch(e.request).then(function(response) {
+        var clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        return response;
+      });
+    })
+  );
 });
