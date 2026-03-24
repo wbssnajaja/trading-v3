@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Chronicle — 宏观事件编年史</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f; --surface: #12121a; --surface-hover: #1a1a25;
+  --border: #1e1e2e; --border-active: #2a2a3e;
+  --text: #e0e0e8; --text-muted: #6b6b80; --text-dim: #44445a;
+  --accent: #f59e0b; --accent-dim: #78500d;
+  --asia: #22d3ee; --asia-dim: #0e4f5a;
+  --us: #a78bfa; --us-dim: #3b2d6e;
+  --crypto: #34d399; --crypto-dim: #0f4a33;
+  --danger: #ef4444; --danger-dim: #5c1a1a;
+  --warning: #f59e0b;
+  --ongoing: #fb923c; --ongoing-dim: #5c3a12;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-active); }
+html, body, #root { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans SC', sans-serif; }
+
+.app { max-width: 1400px; margin: 0 auto; padding: 16px 20px; min-height: 100vh; }
+
+/* Header */
+.header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.header h1 { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: 700; letter-spacing: 2px; color: var(--accent); white-space: nowrap; }
+.header .sub { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono'; }
+.header-actions { margin-left: auto; display: flex; gap: 6px; }
+.header-btn { padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 11px; cursor: pointer; font-family: 'JetBrains Mono'; transition: all .2s; }
+.header-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Stats */
+.stats-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat-card { padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; min-width: 80px; }
+.stat-num { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: 700; }
+.stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* Nav */
+.nav { display: flex; gap: 2px; margin-bottom: 14px; background: var(--surface); border-radius: 8px; padding: 3px; border: 1px solid var(--border); }
+.nav-btn { flex: 1; padding: 10px 16px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-family: 'Noto Sans SC'; cursor: pointer; border-radius: 6px; transition: all .2s; font-weight: 500; }
+.nav-btn:hover { color: var(--text); background: var(--surface-hover); }
+.nav-btn.active { background: var(--border-active); color: var(--accent); }
+
+/* Filters */
+.track-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.track-chip { padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid; transition: all .2s; font-weight: 500; user-select: none; }
+.track-chip.off { opacity: .35; }
+.search-input { flex: 1; min-width: 120px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-family: 'Noto Sans SC'; outline: none; transition: border-color .2s; }
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-dim); }
+.add-btn { padding: 7px 18px; border-radius: 6px; border: 1px dashed var(--border-active); background: transparent; color: var(--accent); font-size: 12px; cursor: pointer; font-family: 'Noto Sans SC'; transition: all .2s; white-space: nowrap; }
+.add-btn:hover { background: var(--accent-dim); border-style: solid; }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.tl-item { position: relative; margin-bottom: 14px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; transition: all .2s; cursor: pointer; }
+.tl-item:hover { border-color: var(--border-active); transform: translateX(4px); }
+.tl-dot { position: absolute; left: -21px; top: 20px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid; background: var(--bg); }
+.tl-date { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.tl-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.tl-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.tl-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; flex-wrap: wrap; }
+.tl-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+.tl-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: var(--surface-hover); color: var(--text-muted); border: 1px solid var(--border); }
+.badge { font-size: 10px; padding: 2px 10px; border-radius: 10px; font-weight: 600; }
+.coin-badge { font-family: 'JetBrains Mono'; font-size: 10px; padding: 2px 8px; border-radius: 10px; background: var(--crypto-dim); color: var(--crypto); font-weight: 600; }
+.importance-dots { position: absolute; right: 14px; top: 14px; display: flex; gap: 3px; }
+.importance-dots span { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.tl-actions { position: absolute; right: 14px; bottom: 12px; display: flex; gap: 6px; opacity: 0; transition: opacity .2s; }
+.tl-item:hover .tl-actions { opacity: 1; }
+.act-btn { padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-size: 10px; cursor: pointer; font-family: 'Noto Sans SC'; transition: all .15s; }
+.act-btn:hover { color: var(--text); border-color: var(--border-active); }
+.act-btn.del:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Swipe to delete */
+.swipe-wrapper { position: relative; overflow: hidden; border-radius: 8px; margin-bottom: 14px; }
+.swipe-content { position: relative; z-index: 2; transition: transform .25s ease; touch-action: pan-y; }
+.swipe-content.dragging { transition: none; }
+.swipe-behind { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; display: flex; align-items: center; justify-content: center; background: var(--danger); color: #fff; font-size: 13px; font-weight: 600; font-family: 'Noto Sans SC'; z-index: 1; border-radius: 0 8px 8px 0; cursor: pointer; user-select: none; }
+.swipe-behind:active { background: #dc2626; }
+
+/* Ongoing */
+.ongoing-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; transition: all .2s; }
+.ongoing-card:hover { border-color: var(--border-active); }
+.ongoing-header { padding: 14px 18px; display: flex; align-items: center; gap: 10px; cursor: pointer; flex-wrap: wrap; }
+.ongoing-status { font-size: 10px; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+.ongoing-title { font-size: 15px; font-weight: 600; flex: 1; min-width: 100px; }
+.ongoing-count { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text-muted); }
+.ongoing-chevron { color: var(--text-muted); font-size: 12px; transition: transform .2s; }
+.ongoing-chevron.open { transform: rotate(90deg); }
+.ongoing-body { padding: 0 18px 14px; }
+.ongoing-update { position: relative; padding: 8px 0 8px 22px; border-left: 1px solid var(--border); margin-left: 5px; }
+.ongoing-update::before { content: ''; position: absolute; left: -3.5px; top: 14px; width: 7px; height: 7px; border-radius: 50%; background: var(--border-active); }
+.ongoing-update:last-child::before { background: var(--ongoing); }
+.ou-date { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); }
+.ou-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+.ou-add { margin: 10px 0 0 26px; display: flex; gap: 8px; }
+.ou-add input { flex: 1; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 12px; font-family: 'Noto Sans SC'; outline: none; }
+.ou-add input:focus { border-color: var(--accent); }
+.ou-add button { padding: 6px 14px; border-radius: 6px; border: none; background: var(--accent-dim); color: var(--accent); font-size: 11px; cursor: pointer; font-family: 'Noto Sans SC'; }
+.ongoing-footer { display: flex; gap: 6px; margin-top: 12px; justify-content: flex-end; }
+
+/* Future */
+.future-item { display: flex; align-items: stretch; gap: 14px; margin-bottom: 10px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; transition: all .2s; cursor: pointer; position: relative; }
+.future-item:hover { border-color: var(--border-active); transform: translateX(4px); }
+.future-countdown { font-family: 'JetBrains Mono'; font-size: 22px; font-weight: 700; min-width: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.future-countdown .unit { font-size: 9px; font-weight: 400; color: var(--text-muted); }
+.future-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+.future-content { flex: 1; min-width: 0; }
+.future-actions { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; opacity: 0; transition: opacity .2s; }
+.future-item:hover .future-actions { opacity: 1; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+.modal { background: var(--surface); border: 1px solid var(--border-active); border-radius: 12px; padding: 24px; width: 92%; max-width: 520px; max-height: 85vh; overflow-y: auto; }
+.modal h3 { font-size: 16px; margin-bottom: 16px; color: var(--accent); }
+.modal label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px; }
+.modal input, .modal textarea, .modal select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; font-family: 'Noto Sans SC'; outline: none; }
+.modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+.modal textarea { min-height: 60px; resize: vertical; }
+.modal select { cursor: pointer; }
+.modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.modal-tag { padding: 4px 12px; border-radius: 14px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-muted); transition: all .15s; }
+.modal-tag.sel { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.modal-btns { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+.modal-btns button { padding: 8px 24px; border-radius: 6px; border: none; font-size: 13px; cursor: pointer; font-family: 'Noto Sans SC'; font-weight: 500; }
+.btn-cancel { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border) !important; }
+.btn-save { background: var(--accent); color: var(--bg); }
+.btn-save:hover { filter: brightness(1.1); }
+.importance-sel { display: flex; gap: 8px; margin-top: 6px; }
+.imp-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all .15s; color: var(--text-dim); }
+.imp-dot.sel { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--text-dim); font-size: 13px; }
+.empty .icon { font-size: 36px; margin-bottom: 12px; }
+
+/* Year divider */
+.year-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; padding-left: 0; }
+.year-divider .year-label { font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 700; color: var(--accent); background: var(--bg); padding: 2px 0; white-space: nowrap; letter-spacing: 1px; }
+.year-divider .year-line { flex: 1; height: 1px; background: linear-gradient(to right, var(--accent-dim), transparent); }
+.year-divider .year-count { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); background: var(--bg); padding: 2px 0; }
+
+/* Future sections */
+.future-section { margin-bottom: 20px; }
+.future-section-header { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; padding: 6px 12px; background: var(--surface); border-radius: 6px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; }
+.future-section-header .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Ongoing duration bar */
+.ongoing-duration { margin: 8px 0 12px; display: flex; align-items: center; gap: 8px; }
+.ongoing-bar-track { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.ongoing-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+.ongoing-days { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+
+/* Data modal */
+.data-modal textarea { width: 100%; min-height: 300px; font-family: 'JetBrains Mono'; font-size: 11px; background: var(--bg); color: var(--crypto); border: 1px solid var(--border); border-radius: 6px; padding: 12px; resize: vertical; outline: none; }
+.data-modal textarea:focus { border-color: var(--accent); }
+.data-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.data-actions button { padding: 8px 18px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: 'Noto Sans SC'; transition: all .15s; }
+.data-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.data-actions .btn-import { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+.footer { text-align: center; padding: 20px 0 10px; color: var(--text-dim); font-size: 10px; font-family: 'JetBrains Mono'; }
+
+@media (max-width: 640px) {
+  .header { flex-direction: column; gap: 8px; }
+  .header-actions { margin-left: 0; }
+  .stats-bar { gap: 6px; }
+  .stat-card { min-width: 60px; padding: 6px 10px; }
+  .stat-num { font-size: 16px; }
+  .future-countdown { font-size: 18px; min-width: 44px; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ═══════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════ */
+const TRACK_META = {
+  asia:   { label: "大东亚", color: "#22d3ee", dim: "#0e4f5a", icon: "🏯" },
+  us:     { label: "美国",   color: "#a78bfa", dim: "#3b2d6e", icon: "🗽" },
+  crypto: { label: "加密",   color: "#34d399", dim: "#0f4a33", icon: "₿" },
+};
+
+const TAG_OPTIONS = {
+  past:    ["过热信号","政策变动","公司事件","市场里程碑","黑天鹅","监管","地缘政治","贵金属","财报"],
+  ongoing: ["关税","战争","货币政策","科技竞争","监管风暴","政治","供应链","贵金属牛市"],
+  future:  ["财报","会议","政策","IPO","访问","数据发布","到期日","贵金属"],
+};
+
+const CRYPTO_COINS = ["BTC","ETH","SOL","HYPE"];
+
+const STATUS_MAP = {
+  escalating: { label: "升级中", color: "#ef4444" },
+  active:     { label: "进行中", color: "#fb923c" },
+  cooling:    { label: "降温中", color: "#f59e0b" },
+  resolved:   { label: "已结束", color: "#6b6b80" },
+};
+
+/* ═══════════════════════════════════════════
+   SEED DATA — 全部日期已联网校验
+   ═══════════════════════════════════════════ */
+const SEED_PAST = [
+  // ─── 2024 ───
+  { id:"p01", date:"2024-01-10", track:"crypto", title:"SEC批准首批比特币现货ETF", tags:["政策变动","市场里程碑"], desc:"11只BTC现货ETF获批。BlackRock IBIT年末AUM超$500亿，机构正式入场加密资产", coin:"BTC", importance:3 },
+  { id:"p02", date:"2024-04-20", track:"crypto", title:"比特币第四次减半", tags:["市场里程碑"], desc:"区块840,000。挖矿奖励6.25→3.125 BTC。供给收紧为后续牛市蓄力", coin:"BTC", importance:2 },
+  { id:"p03", date:"2024-09-18", track:"us", title:"鲍威尔启动降息周期：首次降50bp", tags:["政策变动","市场里程碑"], desc:"美联储四年来首次降息，直接50bp至4.75-5%。终结自2022年3月以来的紧缩周期", importance:3 },
+  { id:"p04", date:"2024-09-24", track:"asia", title:"924新政：央行+证监会+金融监管总局三箭齐发", tags:["政策变动","市场里程碑"], desc:"一揽子金融政策：降准降息+创设新工具直接支持股市。上证单日飙涨4.15%，A股历史性拐点", importance:3 },
+  { id:"p05", date:"2024-10-08", track:"asia", title:"A股单日成交3.48万亿，史上最高", tags:["过热信号","市场里程碑"], desc:"国庆后开盘逼近涨停，上证最高3674。换手率9%。10月全月新开户684万户创五年新高", importance:3 },
+  { id:"p06", date:"2024-11-05", track:"us", title:"特朗普赢得2024大选", tags:["政策变动","市场里程碑"], desc:"共和党横扫白宫+参众两院。BTC当日从$69k起飞，美股全线暴涨。加密友好政策预期拉满", importance:3 },
+  { id:"p07", date:"2024-12-05", track:"crypto", title:"BTC首次突破$100,000", tags:["市场里程碑"], desc:"最高$104,000。年内涨幅126%。特朗普胜选+ETF资金流入+减半效应三重催化", coin:"BTC", importance:3 },
+  { id:"p08", date:"2024-12-18", track:"us", title:"美联储年内第三次降息25bp，鹰派前瞻引暴跌", tags:["政策变动"], desc:"利率降至4.25-4.5%。点阵图暗示2025仅2次降息（前4次），鲍威尔称通胀'令人沮丧'。纳指暴跌3%，道指九日连跌", importance:3 },
+
+  // ─── 2025 ───
+  { id:"p09", date:"2025-01-20", track:"us", title:"特朗普宣誓就任第47任总统", tags:["政策变动","市场里程碑"], desc:"就职演说强调'美国优先'。签署数字资产行政命令成立加密工作组。关税时代开启", importance:3 },
+  { id:"p10", date:"2025-02-25", track:"us", title:"特朗普全面加征钢铝关税25%", tags:["政策变动","贵金属"], desc:"对所有进口钢铁和铝征收25%关税，铝价应声跳涨，全球供应链震动", importance:2 },
+  { id:"p11", date:"2025-03-14", track:"us", title:"黄金首次突破$3,000/oz", tags:["市场里程碑","贵金属"], desc:"地缘风险+美元走弱+央行持续购金推动金价历史性破3000美元。2025年初至此涨幅约14%", importance:3 },
+  { id:"p12", date:"2025-04-02", track:"us", title:"'解放日'关税：全面对等关税震惊全球", tags:["地缘政治","政策变动"], desc:"对华关税最终升至145%，全球多国遭关税打击。市场巨震，铜铝大幅波动。被称为Liberation Day", importance:3 },
+  { id:"p13", date:"2025-06-05", track:"crypto", title:"Circle IPO上市纽交所", tags:["公司事件","市场里程碑"], desc:"USDC发行商Circle成为首家在NYSE上市的稳定币公司，标志加密行业合规化里程碑", coin:"ETH", importance:2 },
+  { id:"p14", date:"2025-06-17", track:"crypto", title:"GENIUS Act参议院通过68:30", tags:["政策变动","市场里程碑"], desc:"美国首部联邦稳定币监管法案。要求1:1美元储备，稳定币不再是证券/商品。17名民主党人跨党投票", coin:"ETH", importance:3 },
+  { id:"p15", date:"2025-07-04", track:"us", title:"'大美丽法案'签署成法", tags:["政策变动","市场里程碑"], desc:"OBBBA：永久延续2017减税、免税小费/加班/社保、削减Medicaid/SNAP。十年增$3万亿债务。参51:50（万斯打破平局），众218:214", importance:3 },
+  { id:"p16", date:"2025-07-18", track:"crypto", title:"GENIUS Act签署成法", tags:["政策变动"], desc:"众议院308:122通过，特朗普次日签署。美国加密监管新纪元", coin:"ETH", importance:2 },
+  { id:"p17", date:"2025-08-18", track:"asia", title:"A股总市值突破100万亿人民币", tags:["市场里程碑","过热信号"], desc:"924新政近一周年，沪深总市值历史性破百万亿。波动率反降至15.9%", importance:3 },
+  { id:"p18", date:"2025-09-10", track:"us", title:"Oracle(ORCL)创历史新高$345.72", tags:["公司事件","财报"], desc:"AI基础设施叙事推动。RPO暴增，云收入占比过半。Larry Ellison的AI数据中心战略获市场狂热追捧", importance:2 },
+  { id:"p19", date:"2025-10-10", track:"crypto", title:"币安'黑色星期五'宕机，160万人爆仓", tags:["黑天鹅"], desc:"加密暴跌叠加币安系统宕机。社交媒体怒斥'关键时刻拔网线'，部分资产脱锚，ADL错误清算。10月13日币安发声明称核心引擎正常", coin:"BTC", importance:3 },
+  { id:"p20", date:"2025-10-17", track:"us", title:"黄金突破$4,000/oz", tags:["市场里程碑","贵金属"], desc:"年内53次刷新历史高点。关税不确定性+央行购金+ETF流入三重驱动。2025全年金价涨66%（1979年以来最佳）", importance:3 },
+  { id:"p21", date:"2025-12-18", track:"us", title:"美联储2025最后一次降息25bp", tags:["政策变动"], desc:"利率降至3.50-3.75%。全年降100bp。声称恢复国债购买$400亿/月，Pomboy称这是变相QE", importance:2 },
+  { id:"p22", date:"2025-12-31", track:"us", title:"2025年贵金属回顾：金+66%，银+142%，铜+41%", tags:["市场里程碑","贵金属"], desc:"黄金年终$4,325。白银年涨142%创历史。铜年涨41%为2009年以来最大。全球总需求首破5000吨", importance:3 },
+
+  // ─── 2026 ───
+  { id:"p23", date:"2026-01-26", track:"us", title:"黄金突破$5,000/oz，白银破$100", tags:["市场里程碑","贵金属"], desc:"金价$5,100+，投机买盘涌入。白银同日飙至$110.87创历史。金银比急剧压缩", importance:3 },
+  { id:"p24", date:"2026-01-29", track:"us", title:"黄金创ATH $5,595/oz", tags:["市场里程碑","贵金属"], desc:"历史最高点。随后大幅回调至$4,894收月。VanEck称本轮牛市累计涨200%，仅经历第二次10%+回调", importance:3 },
+  { id:"p25", date:"2026-02-01", track:"us", title:"SpaceX完成收购xAI", tags:["公司事件","市场里程碑"], desc:"全股票交易，xAI成为SpaceX全资子公司。合并估值$1.25万亿。含Starlink+Grok+X平台。为IPO铺路", importance:2 },
+  { id:"p30", date:"2026-02-25", track:"us", title:"Nvidia Q4 FY2026财报超预期：Blackwell出货加速", tags:["财报","公司事件"], desc:"AI数据中心营收暴增，EPS/营收双超预期。但股价微涨——估值已大幅压缩，类似Oracle路径。市场关注capex回报周期", importance:3 },
+  { id:"p26", date:"2026-03-04", track:"asia", title:"韩股触发熔断：Kospi单日跌12%历史最大跌幅", tags:["黑天鹅","过热信号"], desc:"伊朗冲突+地缘风险引发恐慌抛售，2024年以来首次熔断。韩元17年新低，半万亿美元市值蒸发。三星/海力士领跌", importance:3 },
+  { id:"p31", date:"2026-03-09", track:"us", title:"Oracle Q3 FY2026财报超预期15%", tags:["财报","公司事件"], desc:"EPS $1.79 vs 预期$1.55。营收$17.2B，YoY+22%。AI基础设施收入暴增243%。获TikTok 15%股份。但股价从ATH $345已跌至$155", importance:2 },
+  { id:"p32", date:"2026-03-09", track:"asia", title:"韩股再次触发熔断：Kospi跌8%", tags:["黑天鹅"], desc:"中东局势持续恶化，本月第二次熔断。亚太全线重挫，韩元逼近1500", importance:3 },
+  { id:"p33", date:"2026-03-10", track:"crypto", title:"Hyperliquid HIP-4 testnet上线：Outcome Contracts预测市场", tags:["市场里程碑","科技竞争"], desc:"一日到期二元期权首推BTC/HYPE。HIP-3 permissionless perps后又一重大扩展。主网计划2026年内", coin:"HYPE", importance:3 },
+  { id:"p34", date:"2026-03-18", track:"us", title:"马斯克加速与SEC和解，SpaceX IPO扫清障碍", tags:["公司事件","IPO"], desc:"SEC法庭文件显示双方就Twitter持股披露违规和解中。投行希望IPO前了结。目标6月Nasdaq上市", importance:2 },
+  { id:"p35", date:"2026-03-18", track:"asia", title:"腾讯Q4财报后暴跌6.5%（AI变现不及预期）", tags:["财报","公司事件"], desc:"营收+13%超预期，但宣布缩减回购增AI capex。阿里同日重挫，合计市值蒸发$660亿。股价年内最大单日跌幅", importance:3 },
+  { id:"p28", date:"2026-03-20", track:"asia", title:"恒立液压实控人汪立平被留置", tags:["公司事件","监管"], desc:"千亿'液压茅'掌门被江苏省监委留置。此前家族高位套现29.3亿。常州首富，2025股价翻倍后年初回调9%", importance:3 },
+  { id:"p29", date:"2026-03-22", track:"asia", title:"三安光电实控人林秀成被国家监委留置", tags:["公司事件","监管"], desc:"LED及化合物半导体龙头，被国家监察委留置。一周两大千亿龙头实控人落马。三安2025年预亏2-3亿", importance:3 },
+  // ─── 2026-01 MAG7财报季 ───
+  { id:"p36", date:"2026-01-28", track:"us", title:"MAG7 Q4财报季开启：Meta/MSFT/TSLA/AAPL集体超预期", tags:["财报"], desc:"AI capex指引强劲，2026盈利预期上修至18%。市场分化明显——AI受益者vs传统业务", importance:3 },
+  { id:"p37", date:"2026-01-28", track:"asia", title:"三星电子Q4 2025财报：HBM3E驱动营收大增", tags:["财报"], desc:"AI内存供应链核心。SK海力士同季亦超预期。韩股半导体板块领涨", importance:2 },
+];
+
+const SEED_ONGOING = [
+  { id:"o1", title:"中美关税战2.0", track:"us", tags:["关税","地缘政治"], status:"escalating", startDate:"2025-02-01", updates:[
+    { date:"2025-02-01", text:"对华加征10%额外关税" },
+    { date:"2025-02-25", text:"全面25%钢铝关税，铝价跳涨" },
+    { date:"2025-04-02", text:"'解放日'全面对等关税，全球震荡" },
+    { date:"2025-04-09", text:"对华关税升至145%，中国反制稀土出口管制" },
+    { date:"2025-05-12", text:"日内瓦会谈，关税降至30%（90天窗口）" },
+    { date:"2026-03-20", text:"H200芯片、波音、大豆仍是核心博弈筹码" },
+  ]},
+  { id:"o2", title:"美伊冲突与中东局势", track:"us", tags:["战争","地缘政治"], status:"escalating", startDate:"2025-06-01", updates:[
+    { date:"2025-06-15", text:"美以联合对伊核设施发出军事警告" },
+    { date:"2025-10-01", text:"中东紧张推升WTI原油" },
+    { date:"2026-01-03", text:"美军打击委内瑞拉，地缘紧张加剧，金价飙升" },
+    { date:"2026-03-18", text:"油价破$100，英国核潜艇抵达阿拉伯海" },
+    { date:"2026-03-22", text:"伊朗提4项措施回应，霍尔木兹海峡局势紧绷" },
+  ]},
+  { id:"o3", title:"贵金属超级牛市", track:"us", tags:["贵金属牛市","货币政策"], status:"active", startDate:"2024-03-01", updates:[
+    { date:"2024-03-08", text:"金价突破$2,100启动新一轮牛市" },
+    { date:"2025-03-14", text:"金价首破$3,000" },
+    { date:"2025-10-17", text:"金价破$4,000，年内53次创ATH" },
+    { date:"2025-12-31", text:"年终：金+66%，银+142%，铜+41%" },
+    { date:"2026-01-29", text:"金价ATH $5,595，白银$110.87" },
+    { date:"2026-03-20", text:"金价回调至$4,660区间，JPM目标Q4 $5,000" },
+  ]},
+  { id:"o4", title:"A股龙头留置潮", track:"asia", tags:["监管风暴"], status:"active", startDate:"2026-03-20", updates:[
+    { date:"2026-03-20", text:"恒立液压汪立平被留置，此前套现29亿" },
+    { date:"2026-03-22", text:"三安光电林秀成被国家监委留置，一周两起" },
+  ]},
+  { id:"o5", title:"HYPE生态与Hyperliquid崛起", track:"crypto", tags:["科技竞争"], status:"active", startDate:"2024-11-01", coin:"HYPE", updates:[
+    { date:"2024-11-29", text:"HYPE代币TGE空投，开盘暴涨" },
+    { date:"2025-03-01", text:"日交易量持续创新高" },
+    { date:"2025-10-10", text:"币安宕机凸显CEX风险，DEX叙事受益" },
+    { date:"2026-03-10", text:"HIP-4 testnet上线：Outcome Contracts预测市场，BTC/HYPE二元期权" },
+  ]},
+];
+
+const SEED_FUTURE = [
+  // ─── 本周 ───
+  { id:"f01", date:"2026-03-24", track:"asia", title:"恒立液压/三安光电复牌首日", tags:["公司事件"], desc:"两大千亿龙头留置后首个交易日，关注跌停板数量和恐慌传导范围" },
+
+  // ─── 4月 ───
+  { id:"f03", date:"2026-04-15", track:"asia", title:"中国Q1 GDP数据", tags:["数据发布"], desc:"关注关税冲击下出口承压与内需刺激对冲效果" },
+  { id:"f18", date:"2026-04-22", track:"asia", title:"SK海力士 Q1 2026财报", tags:["财报"], desc:"HBM产能/定价是AI硬件供应链核心变量。HBM3E出货节奏决定英伟达供给" },
+  { id:"f19", date:"2026-04-23", track:"asia", title:"三星电子 Q1 2026财报", tags:["财报"], desc:"HBM3E良率追赶进度。AI内存需求与传统DRAM周期分化" },
+  { id:"f05", date:"2026-04-28", track:"us", title:"FOMC 4月利率决议（Powell任期末会议）", tags:["会议","政策"], desc:"当前3.50-3.75%。可能是鲍威尔最后一次主持" },
+  { id:"f06", date:"2026-04-30", track:"asia", title:"A股年报季收官 + 腾讯/阿里Q1财报窗口", tags:["财报"], desc:"腾讯3月暴跌6.5%后的AI capex回报验证窗口" },
+
+  // ─── 5月 ───
+  { id:"f07", date:"2026-05-15", track:"us", title:"鲍威尔美联储主席任期届满", tags:["政策","市场里程碑"], desc:"Powell第二届任期结束。特朗普将提名继任者，货币政策方向可能根本性转变" },
+
+  // ─── 6月 ───
+  { id:"f21", date:"2026-06-01", track:"crypto", title:"Hyperliquid HIP-4主网预计上线", tags:["市场里程碑"], desc:"一日到期预测市场正式落地，BTC/HYPE二元期权先行", coin:"HYPE" },
+  { id:"f08", date:"2026-06-10", track:"us", title:"Oracle(ORCL) Q4 FY2026财报", tags:["财报"], desc:"上季EPS $1.79超预期15%。关注AI infra收入和TikTok进展。股价$150区间" },
+  { id:"f09", date:"2026-06-15", track:"us", title:"SpaceX IPO（预计6月Nasdaq）", tags:["IPO","市场里程碑"], desc:"史上最大IPO：估值$1.5-1.75万亿，融资$500亿。含Starlink+xAI+Grok" },
+  { id:"f10", date:"2026-06-16", track:"us", title:"FOMC 6月利率决议（含SEP+点阵图）", tags:["会议","政策"], desc:"可能是新主席首次主持" },
+
+  // ─── 7月 ───
+  { id:"f11", date:"2026-07-01", track:"asia", title:"日本央行7月利率决议", tags:["会议","政策"], desc:"BOJ加息路径关键节点" },
+  { id:"f22", date:"2026-07-15", track:"asia", title:"三星/SK海力士 Q2财报窗口", tags:["财报"], desc:"HBM定价与AI供应链核心" },
+  { id:"f13", date:"2026-07-18", track:"crypto", title:"GENIUS Act配套规则制定截止", tags:["政策","到期日"], desc:"OCC/FDIC细则将重塑稳定币格局", coin:"ETH" },
+
+  // ─── Q3-Q4 ───
+  { id:"f14", date:"2026-09-01", track:"us", title:"OpenAI/Anthropic IPO窗口", tags:["IPO"], desc:"紧随SpaceX之后，三巨头IPO重塑指数权重规则" },
+  { id:"f15", date:"2026-09-15", track:"us", title:"FOMC 9月利率决议（含SEP）", tags:["会议","政策"], desc:"JPM预计Q4金价目标$5,000" },
+  { id:"f16", date:"2026-10-27", track:"us", title:"FOMC 10月利率决议", tags:["会议","政策"], desc:"年末倒数第二次" },
+  { id:"f17", date:"2026-12-08", track:"us", title:"FOMC 12月利率决议（含SEP+点阵图）", tags:["会议","政策"], desc:"2026最后一次" },
+];
+
+/* ═══════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════ */
+const genId = () => Math.random().toString(36).slice(2,10);
+const fmtDate = d => { if(!d) return ""; const dt=new Date(d+"T00:00:00"); return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,"0")}.${String(dt.getDate()).padStart(2,"0")}`; };
+const daysDiff = d => { const n=new Date(); n.setHours(0,0,0,0); return Math.ceil((new Date(d+"T00:00:00")-n)/864e5); };
+const trackColor = t => TRACK_META[t]?.color || "#e0e0e8";
+const trackDim = t => TRACK_META[t]?.dim || "#1e1e2e";
+
+/* localStorage helpers — with version-based cache busting */
+const DATA_VERSION = "v3.0"; // bump this when SEED data changes
+const KEYS = { past:"mc_past", ongoing:"mc_ongoing", future:"mc_future", version:"mc_version" };
+function load(key, seed) {
+  const storedVer = localStorage.getItem(KEYS.version);
+  if (storedVer !== DATA_VERSION) {
+    // SEED data updated — clear old cache
+    localStorage.removeItem(KEYS.past);
+    localStorage.removeItem(KEYS.ongoing);
+    localStorage.removeItem(KEYS.future);
+    localStorage.setItem(KEYS.version, DATA_VERSION);
+    return seed;
+  }
+  try { const v=localStorage.getItem(key); if(v) return JSON.parse(v); } catch{}
+  return seed;
+}
+function save(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){ console.error(e); } }
+function resetAllData() {
+  localStorage.removeItem(KEYS.past);
+  localStorage.removeItem(KEYS.ongoing);
+  localStorage.removeItem(KEYS.future);
+  localStorage.removeItem(KEYS.version);
+  window.location.reload();
+}
+
+/* ═══════════════════════════════════════════
+   MODAL COMPONENT
+   ═══════════════════════════════════════════ */
+function EventModal({ mode, type, event, onSave, onDelete, onClose }) {
+  const isOngoing = type === "ongoing";
+  const [form, setForm] = useState(event || {
+    title:"", date:"", track:"asia", tags:[], desc:"", importance:2,
+    ...(isOngoing ? { status:"active", startDate:"", updates:[] } : {}),
+  });
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const toggleTag = t => set("tags", form.tags?.includes(t) ? form.tags.filter(x=>x!==t) : [...(form.tags||[]),t]);
+  const tagOpts = TAG_OPTIONS[type] || TAG_OPTIONS.past;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>{mode==="edit"?"编辑":"添加"}{type==="past"?"历史事件":type==="ongoing"?"持续追踪":"未来事件"}</h3>
+        <label>标题</label>
+        <input value={form.title} onChange={e=>set("title",e.target.value)} placeholder="事件名称" />
+        <label>{isOngoing?"开始日期":"日期"}</label>
+        <input type="date" value={isOngoing?form.startDate:form.date} onChange={e=>set(isOngoing?"startDate":"date",e.target.value)} />
+        <label>市场线</label>
+        <select value={form.track} onChange={e=>set("track",e.target.value)}>
+          {Object.entries(TRACK_META).map(([k,v])=><option key={k} value={k}>{v.icon} {v.label}</option>)}
+        </select>
+        {form.track==="crypto" && <>
+          <label>关联币种</label>
+          <select value={form.coin||""} onChange={e=>set("coin",e.target.value)}>
+            <option value="">无</option>
+            {[...CRYPTO_COINS,"热门币"].map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+        </>}
+        {isOngoing && <>
+          <label>状态</label>
+          <select value={form.status} onChange={e=>set("status",e.target.value)}>
+            {Object.entries(STATUS_MAP).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </>}
+        <label>标签</label>
+        <div className="modal-tags">
+          {tagOpts.map(t=><button key={t} className={`modal-tag ${form.tags?.includes(t)?"sel":""}`} onClick={()=>toggleTag(t)}>{t}</button>)}
+        </div>
+        {!isOngoing && <>
+          <label>描述</label>
+          <textarea value={form.desc||""} onChange={e=>set("desc",e.target.value)} placeholder="补充说明..." />
+          <label>重要程度</label>
+          <div className="importance-sel">
+            {[1,2,3].map(i=><div key={i} className={`imp-dot ${form.importance===i?"sel":""}`} onClick={()=>set("importance",i)}>{"★".repeat(i)}</div>)}
+          </div>
+        </>}
+        <div className="modal-btns">
+          {mode==="edit" && onDelete && <button style={{padding:"8px 18px",borderRadius:6,border:"1px solid #ef4444",background:"transparent",color:"#ef4444",fontSize:13,cursor:"pointer",fontFamily:"Noto Sans SC",marginRight:"auto"}} onClick={()=>onDelete()}>🗑 删除</button>}
+          <button className="btn-cancel" onClick={onClose}>取消</button>
+          <button className="btn-save" onClick={()=>{ if(form.title) onSave({...form, id:form.id||genId()}); }}>保存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   SWIPE TO DELETE
+   ═══════════════════════════════════════════ */
+function SwipeItem({ onDelete, children }) {
+  const ref = useRef(null);
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const swiping = useRef(false);
+  const opened = useRef(false);
+  const moved = useRef(false);
+  const THRESHOLD = 50;
+
+  const begin = x => { startX.current = x; swiping.current = true; moved.current = false; if(ref.current) ref.current.classList.add("dragging"); };
+  const move = x => {
+    if(!swiping.current) return;
+    const dx = x - startX.current;
+    if(Math.abs(dx) > 5) moved.current = true;
+    const base = opened.current ? -80 : 0;
+    const val = Math.min(0, Math.max(-80, base + dx));
+    currentX.current = val;
+    if(ref.current) ref.current.style.transform = `translateX(${val}px)`;
+  };
+  const end = () => {
+    swiping.current = false;
+    if(ref.current) ref.current.classList.remove("dragging");
+    if(currentX.current < -THRESHOLD) {
+      opened.current = true;
+      if(ref.current) ref.current.style.transform = "translateX(-80px)";
+    } else {
+      opened.current = false;
+      if(ref.current) ref.current.style.transform = "translateX(0)";
+    }
+  };
+  const close = () => { opened.current = false; currentX.current = 0; if(ref.current) ref.current.style.transform = "translateX(0)"; };
+
+  return (
+    <div className="swipe-wrapper">
+      <div className="swipe-behind" onClick={()=>onDelete()}>删除</div>
+      <div ref={ref} className="swipe-content"
+        onTouchStart={e=>begin(e.touches[0].clientX)}
+        onTouchMove={e=>move(e.touches[0].clientX)}
+        onTouchEnd={end}
+        onMouseDown={e=>{e.preventDefault();begin(e.clientX);}}
+        onMouseMove={e=>{if(swiping.current) move(e.clientX);}}
+        onMouseUp={end}
+        onMouseLeave={()=>{if(swiping.current) end();}}
+        onClickCapture={e=>{if(opened.current||moved.current){e.stopPropagation();if(opened.current)close();}}}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   DATA PANEL (export/import)
+   ═══════════════════════════════════════════ */
+function DataPanel({ past, ongoing, future, onImport, onMerge, onClose }) {
+  const allData = JSON.stringify({ past, ongoing, future, exportedAt: new Date().toISOString() }, null, 2);
+  const [importText, setImportText] = useState("");
+  const [mode, setMode] = useState("export"); // export | import | copied
+  const [mergeResult, setMergeResult] = useState("");
+
+  const handleCopy = () => { navigator.clipboard.writeText(allData).catch(()=>{}); setMode("copied"); setTimeout(()=>setMode("export"),1500); };
+  const handleDownload = () => {
+    const blob = new Blob([allData], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download=`market-chronicle-${new Date().toISOString().split("T")[0]}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+  const parseInput = () => {
+    try {
+      const d = JSON.parse(importText);
+      if(d.past && d.ongoing && d.future) return d;
+      setMergeResult("❌ 需包含 past, ongoing, future 字段"); return null;
+    } catch { setMergeResult("❌ JSON 解析失败"); return null; }
+  };
+  const handleOverwrite = () => { const d = parseInput(); if(d) { onImport(d); onClose(); } };
+  const handleMergeClick = () => {
+    const d = parseInput(); if(!d) return;
+    const newPast = (d.past||[]).filter(e => !past.some(x=>x.id===e.id)).length;
+    const newFuture = (d.future||[]).filter(e => !future.some(x=>x.id===e.id)).length;
+    const newOngoing = (d.ongoing||[]).filter(e => !ongoing.some(x=>x.id===e.id)).length;
+    const updatedOngoing = (d.ongoing||[]).filter(e => ongoing.some(x=>x.id===e.id)).length;
+    onMerge(d);
+    setMergeResult(`✅ 合并完成：+${newPast}条历史，+${newFuture}条未来，+${newOngoing}条新追踪，${updatedOngoing}条追踪更新`);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal data-modal" style={{maxWidth:640}} onClick={e=>e.stopPropagation()}>
+        <h3>📦 数据管理</h3>
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          <button className={`modal-tag ${mode==="export"?"sel":""}`} onClick={()=>setMode("export")}>导出</button>
+          <button className={`modal-tag ${mode==="import"?"sel":""}`} onClick={()=>setMode("import")}>导入</button>
+        </div>
+        {mode==="export" ? <>
+          <p style={{fontSize:12,color:"#6b6b80",marginBottom:8}}>复制下方 JSON 发给 Claude 即可进行数据分析，或下载备份</p>
+          <textarea readOnly value={allData} />
+          <div className="data-actions">
+            <button onClick={handleCopy}>{mode==="copied"?"✅ 已复制":"📋 复制"}</button>
+            <button onClick={handleDownload}>💾 下载 JSON</button>
+            <button onClick={onClose} style={{marginLeft:"auto"}}>关闭</button>
+          </div>
+        </> : <>
+          <p style={{fontSize:12,color:"#6b6b80",marginBottom:8}}>粘贴 Claude 输出的 JSON — 合并只追加新事件，覆盖会替换全部数据</p>
+          <textarea value={importText} onChange={e=>{setImportText(e.target.value);setMergeResult("");}} placeholder='粘贴 JSON 数据...' />
+          {mergeResult && <p style={{fontSize:12,color:mergeResult.startsWith("✅")?"#34d399":"#ef4444",marginTop:8}}>{mergeResult}</p>}
+          <div className="data-actions">
+            <button className="btn-import" onClick={handleMergeClick}>📥 合并导入（追加）</button>
+            <button onClick={handleOverwrite} style={{color:"#ef4444",borderColor:"#ef4444"}}>⚠ 覆盖导入</button>
+            <button onClick={onClose} style={{marginLeft:"auto"}}>关闭</button>
+          </div>
+        </>}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════ */
+function App() {
+  const [tab, setTab] = useState("past");
+  const [tracks, setTracks] = useState({asia:true,us:true,crypto:true});
+  const [past, setPast] = useState(()=>load(KEYS.past, SEED_PAST));
+  const [ongoing, setOngoing] = useState(()=>load(KEYS.ongoing, SEED_ONGOING));
+  const [future, setFuture] = useState(()=>load(KEYS.future, SEED_FUTURE));
+  const [modal, setModal] = useState(null);
+  const [dataPanel, setDataPanel] = useState(false);
+  const [expanded, setExpanded] = useState({});
+  const [search, setSearch] = useState("");
+  const [newUpdates, setNewUpdates] = useState({});
+
+  useEffect(()=>save(KEYS.past, past),[past]);
+  useEffect(()=>save(KEYS.ongoing, ongoing),[ongoing]);
+  useEffect(()=>save(KEYS.future, future),[future]);
+
+  const toggleTrack = t => setTracks(p=>({...p,[t]:!p[t]}));
+
+  const saveEvent = (type, ev) => {
+    const setter = type==="past"?setPast : type==="ongoing"?setOngoing : setFuture;
+    setter(prev => {
+      const i=prev.findIndex(x=>x.id===ev.id);
+      let next;
+      if(i>=0){next=[...prev];next[i]=ev;} else {next=[...prev,ev];}
+      // Auto-sort: past by date desc, future by date asc, ongoing by startDate desc
+      if(type==="past") next.sort((a,b)=>b.date.localeCompare(a.date));
+      else if(type==="future") next.sort((a,b)=>a.date.localeCompare(b.date));
+      else next.sort((a,b)=>(b.startDate||"").localeCompare(a.startDate||""));
+      return next;
+    });
+    setModal(null);
+  };
+  const delEvent = (type, id) => {
+    const setter = type==="past"?setPast : type==="ongoing"?setOngoing : setFuture;
+    setter(prev=>prev.filter(x=>x.id!==id));
+  };
+  const addUpdate = id => {
+    const text=newUpdates[id]; if(!text) return;
+    setOngoing(prev=>prev.map(o=>o.id===id?{...o,updates:[...(o.updates||[]),{date:new Date().toISOString().split("T")[0],text}]}:o));
+    setNewUpdates(p=>({...p,[id]:""}));
+  };
+  const handleImport = d => {
+    setPast((d.past||[]).sort((a,b)=>b.date.localeCompare(a.date)));
+    setOngoing(d.ongoing||[]);
+    setFuture((d.future||[]).sort((a,b)=>a.date.localeCompare(b.date)));
+  };
+  const handleMerge = d => {
+    // past/future: add new ids, skip existing
+    setPast(prev => {
+      const ids = new Set(prev.map(e=>e.id));
+      const merged = [...prev, ...(d.past||[]).filter(e=>!ids.has(e.id))];
+      return merged.sort((a,b)=>b.date.localeCompare(a.date));
+    });
+    setFuture(prev => {
+      const ids = new Set(prev.map(e=>e.id));
+      const merged = [...prev, ...(d.future||[]).filter(e=>!ids.has(e.id))];
+      return merged.sort((a,b)=>a.date.localeCompare(b.date));
+    });
+    // ongoing: merge updates for same id, add new ones
+    setOngoing(prev => {
+      const map = new Map(prev.map(o=>[o.id, o]));
+      for (const o of (d.ongoing||[])) {
+        if (map.has(o.id)) {
+          const existing = map.get(o.id);
+          const existDates = new Set(existing.updates?.map(u=>u.date+u.text)||[]);
+          const newUpdates = (o.updates||[]).filter(u=>!existDates.has(u.date+u.text));
+          map.set(o.id, {...existing, status: o.status || existing.status, updates: [...(existing.updates||[]), ...newUpdates]});
+        } else {
+          map.set(o.id, o);
+        }
+      }
+      return [...map.values()];
+    });
+  };
+  const archiveToPost = ev => { setPast(p=>[...p,{...ev,id:genId()}].sort((a,b)=>b.date.localeCompare(a.date))); setFuture(p=>p.filter(x=>x.id!==ev.id)); };
+
+  const filtered = items => items.filter(i=>tracks[i.track]).filter(i=>!search||i.title.includes(search)||i.desc?.includes(search)||i.tags?.some(t=>t.includes(search)));
+  const sortedPast = filtered(past).sort((a,b)=>b.date.localeCompare(a.date));
+  const sortedFuture = filtered(future).sort((a,b)=>a.date.localeCompare(b.date));
+  const filteredOngoing = filtered(ongoing);
+
+  const allItems = [...past,...ongoing,...future];
+
+  return (
+    <div className="app">
+      {/* HEADER */}
+      <div className="header">
+        <h1>◆ MARKET CHRONICLE</h1>
+        <span className="sub">串联过去 · 追踪当下 · 展望未来</span>
+        <div className="header-actions">
+          <button className="header-btn" onClick={()=>setDataPanel(true)}>📦 数据</button>
+          <button className="header-btn" onClick={()=>resetAllData()}>🔄 重置</button>
+        </div>
+      </div>
+
+      {/* STATS */}
+      <div className="stats-bar">
+        <div className="stat-card"><div className="stat-num" style={{color:"#f59e0b"}}>{past.length}</div><div className="stat-label">历史事件</div></div>
+        <div className="stat-card"><div className="stat-num" style={{color:"#fb923c"}}>{ongoing.length}</div><div className="stat-label">持续追踪</div></div>
+        <div className="stat-card"><div className="stat-num" style={{color:"#a78bfa"}}>{future.length}</div><div className="stat-label">未来事件</div></div>
+        {Object.entries(TRACK_META).map(([k,v])=>(
+          <div className="stat-card" key={k}><div className="stat-num" style={{color:v.color}}>{allItems.filter(i=>i.track===k).length}</div><div className="stat-label">{v.icon} {v.label}</div></div>
+        ))}
+      </div>
+
+      {/* NAV */}
+      <div className="nav">
+        {[["past","📜 历史事件",past.length],["ongoing","🔥 持续追踪",ongoing.length],["future","🔮 未来日历",future.length]].map(([k,l,c])=>(
+          <button key={k} className={`nav-btn ${tab===k?"active":""}`} onClick={()=>setTab(k)}>{l} <span style={{fontFamily:"JetBrains Mono",fontSize:10,opacity:.6,marginLeft:4}}>{c}</span></button>
+        ))}
+      </div>
+
+      {/* FILTERS */}
+      <div className="track-filters">
+        {Object.entries(TRACK_META).map(([k,v])=>(
+          <div key={k} className={`track-chip ${tracks[k]?"":"off"}`}
+            style={{borderColor:v.color, color:tracks[k]?v.color:v.dim, background:tracks[k]?v.dim:"transparent"}}
+            onClick={()=>toggleTrack(k)}>{v.icon} {v.label}</div>
+        ))}
+        <input className="search-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="搜索事件..." />
+        <button className="add-btn" onClick={()=>setModal({mode:"add",type:tab==="past"?"past":tab==="ongoing"?"ongoing":"future"})}>
+          + 添加{tab==="past"?"事件":tab==="ongoing"?"追踪":"事件"}
+        </button>
+      </div>
+
+      {/* ═══ PAST TAB ═══ */}
+      {tab==="past" && (
+        <div className="timeline">
+          {sortedPast.length===0 && <div className="empty"><div className="icon">📭</div>暂无事件，点击右上角添加</div>}
+          {sortedPast.map((ev, idx) => {
+            const yr = ev.date?.slice(0,4);
+            const prevYr = idx>0 ? sortedPast[idx-1].date?.slice(0,4) : null;
+            const showYearDivider = yr && yr !== prevYr;
+            const yearCount = showYearDivider ? sortedPast.filter(e=>e.date?.startsWith(yr)).length : 0;
+            return (
+              <React.Fragment key={ev.id}>
+                {showYearDivider && (
+                  <div className="year-divider">
+                    <span className="year-label">{yr}</span>
+                    <span className="year-line" />
+                    <span className="year-count">{yearCount}条</span>
+                  </div>
+                )}
+                <SwipeItem onDelete={()=>delEvent("past",ev.id)}>
+                  <div className="tl-item" style={{borderLeftColor:trackColor(ev.track),borderLeftWidth:3,marginBottom:0}} onClick={()=>setModal({mode:"edit",type:"past",event:ev})}>
+                    <div className="tl-dot" style={{borderColor:trackColor(ev.track)}} />
+                    <div className="importance-dots">
+                      {Array.from({length:ev.importance||1}).map((_,i)=><span key={i} style={{background:trackColor(ev.track)}} />)}
+                    </div>
+                    <div className="tl-date">{fmtDate(ev.date)}</div>
+                    <div className="tl-title" style={{color:trackColor(ev.track)}}>{ev.title}</div>
+                    <div className="tl-meta">
+                      <span className="badge" style={{background:trackDim(ev.track),color:trackColor(ev.track)}}>{TRACK_META[ev.track]?.icon} {TRACK_META[ev.track]?.label}</span>
+                      {ev.coin && <span className="coin-badge">{ev.coin}</span>}
+                    </div>
+                    {ev.desc && <div className="tl-desc">{ev.desc}</div>}
+                    <div className="tl-tags">{ev.tags?.map(t=><span key={t} className="tl-tag">{t}</span>)}</div>
+                  </div>
+                </SwipeItem>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══ ONGOING TAB ═══ */}
+      {tab==="ongoing" && (
+        <div>
+          {filteredOngoing.length===0 && <div className="empty"><div className="icon">📭</div>暂无追踪，点击右上角添加</div>}
+          {filteredOngoing.map(story=>{
+            const isOpen=expanded[story.id];
+            const st=STATUS_MAP[story.status]||STATUS_MAP.active;
+            return (
+              <SwipeItem key={story.id} onDelete={()=>delEvent("ongoing",story.id)}>
+                <div className="ongoing-card" style={{borderLeftColor:trackColor(story.track),borderLeftWidth:3,marginBottom:0}}>
+                  <div className="ongoing-header" onClick={()=>setExpanded(p=>({...p,[story.id]:!p[story.id]}))}>
+                    <span className="ongoing-status" style={{background:st.color+"22",color:st.color}}>{st.label}</span>
+                    <span className="badge" style={{background:trackDim(story.track),color:trackColor(story.track)}}>{TRACK_META[story.track]?.icon} {TRACK_META[story.track]?.label}</span>
+                    {story.coin && <span className="coin-badge">{story.coin}</span>}
+                    <span className="ongoing-title">{story.title}</span>
+                    <span className="ongoing-count">{story.updates?.length||0}条</span>
+                    <span className={`ongoing-chevron ${isOpen?"open":""}`}>▶</span>
+                  </div>
+                  {isOpen && (
+                    <div className="ongoing-body">
+                      <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                        {story.tags?.map(t=><span key={t} className="tl-tag">{t}</span>)}
+                      </div>
+                      {(() => {
+                        const start = new Date(story.startDate+"T00:00:00");
+                        const now = new Date(); now.setHours(0,0,0,0);
+                        const totalDays = Math.max(1, Math.ceil((now - start) / 864e5));
+                        const barColor = st.color;
+                        return (
+                          <div className="ongoing-duration">
+                            <span className="ongoing-days">{fmtDate(story.startDate)}</span>
+                            <div className="ongoing-bar-track">
+                              <div className="ongoing-bar-fill" style={{width:"100%", background:`linear-gradient(90deg, ${barColor}44, ${barColor})`}} />
+                            </div>
+                            <span className="ongoing-days">第{totalDays}天</span>
+                          </div>
+                        );
+                      })()}
+                      {story.updates?.map((u,i)=>(
+                        <div key={i} className="ongoing-update">
+                          <div className="ou-date">{fmtDate(u.date)}</div>
+                          <div className="ou-text">{u.text}</div>
+                        </div>
+                      ))}
+                      <div className="ou-add">
+                        <input value={newUpdates[story.id]||""} onChange={e=>setNewUpdates(p=>({...p,[story.id]:e.target.value}))}
+                          placeholder="添加新进展..." onKeyDown={e=>e.key==="Enter"&&addUpdate(story.id)} />
+                        <button onClick={()=>addUpdate(story.id)}>+ 更新</button>
+                      </div>
+                      <div className="ongoing-footer">
+                        <button className="act-btn" onClick={()=>setModal({mode:"edit",type:"ongoing",event:story})}>编辑</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SwipeItem>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══ FUTURE TAB ═══ */}
+      {tab==="future" && (
+        <div>
+          {sortedFuture.length===0 && <div className="empty"><div className="icon">📭</div>暂无事件，点击右上角添加</div>}
+          {(() => {
+            const now = new Date(); now.setHours(0,0,0,0);
+            const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+            const monthEnd = new Date(now); monthEnd.setDate(monthEnd.getDate() + 30);
+            const overdue = sortedFuture.filter(e => new Date(e.date+"T00:00:00") < now);
+            const thisWeek = sortedFuture.filter(e => { const d=new Date(e.date+"T00:00:00"); return d>=now && d<weekEnd; });
+            const thisMonth = sortedFuture.filter(e => { const d=new Date(e.date+"T00:00:00"); return d>=weekEnd && d<monthEnd; });
+            const later = sortedFuture.filter(e => new Date(e.date+"T00:00:00") >= monthEnd);
+            const sections = [
+              { label:"⚠ 已过期", items: overdue, dotColor:"#ef4444" },
+              { label:"📌 本周", items: thisWeek, dotColor:"#f59e0b" },
+              { label:"📅 30天内", items: thisMonth, dotColor:"#a78bfa" },
+              { label:"🔭 更远", items: later, dotColor:"#6b6b80" },
+            ].filter(s => s.items.length > 0);
+            return sections.map(sec => (
+              <div key={sec.label} className="future-section">
+                <div className="future-section-header"><span className="dot" style={{background:sec.dotColor}} />{sec.label} · {sec.items.length}条</div>
+                {sec.items.map(ev => {
+                  const days=daysDiff(ev.date);
+                  const isOverdue=days<0, isSoon=days<=3&&days>=0;
+                  const countColor = isOverdue?"#ef4444":isSoon?"#f59e0b":trackColor(ev.track);
+                  return (
+                    <SwipeItem key={ev.id} onDelete={()=>delEvent("future",ev.id)}>
+                      <div className="future-item" style={{borderLeftColor:trackColor(ev.track),borderLeftWidth:3,marginBottom:0}} onClick={()=>setModal({mode:"edit",type:"future",event:ev})}>
+                        <div className="future-countdown" style={{color:countColor}}>
+                          <span>{isOverdue?"已过":days===0?"今天":days}</span>
+                          {!isOverdue&&days!==0&&<span className="unit">天</span>}
+                        </div>
+                        <div className="future-divider" />
+                        <div className="future-content">
+                          <div className="tl-date">{fmtDate(ev.date)}</div>
+                          <div className="tl-title" style={{color:trackColor(ev.track),fontSize:14}}>{ev.title}</div>
+                          <div style={{display:"flex",gap:6,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
+                            <span className="badge" style={{background:trackDim(ev.track),color:trackColor(ev.track)}}>{TRACK_META[ev.track]?.icon} {TRACK_META[ev.track]?.label}</span>
+                            {ev.coin && <span className="coin-badge">{ev.coin}</span>}
+                            {ev.tags?.map(t=><span key={t} className="tl-tag">{t}</span>)}
+                          </div>
+                          {ev.desc && <div className="tl-desc" style={{marginTop:6}}>{ev.desc}</div>}
+                        </div>
+                      </div>
+                    </SwipeItem>
+                  );
+                })}
+              </div>
+            ));
+          })()}
+        </div>
+      )}
+
+      {/* MODALS */}
+      {modal && <EventModal mode={modal.mode} type={modal.type} event={modal.event} onSave={ev=>saveEvent(modal.type,ev)} onDelete={modal.mode==="edit" && modal.event ? ()=>{delEvent(modal.type,modal.event.id);setModal(null);} : null} onClose={()=>setModal(null)} />}
+      {dataPanel && <DataPanel past={past} ongoing={ongoing} future={future} onImport={handleImport} onMerge={handleMerge} onClose={()=>setDataPanel(false)} />}
+
+      <div className="footer">MARKET CHRONICLE {DATA_VERSION} — 贵金属+美股+亚洲科技 · 年份分组 · 时间分区</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(function(){});</script>
+<script src="nav-dock.js"></script>
+</body>
+</html>

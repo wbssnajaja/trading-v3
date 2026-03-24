@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<title>基本面追踪器 — TradeFi</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}body{background:#0a0a0a}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+window.storage = {
+  get: (k) => new Promise(r => { try { const v = localStorage.getItem(k); r(v !== null ? {key:k, value:v} : null); } catch { r(null); } }),
+  set: (k, v) => new Promise(r => { try { localStorage.setItem(k, v); r({key:k, value:v}); } catch { r(null); } }),
+};
+const { useState, useEffect, useCallback } = React;
+
+const BUILTIN_TEMPLATES = {
+  default: {
+    name: "通用模板",
+    builtin: true,
+    dimensions: [
+      { id: "revenue", name: "核心收入引擎", desc: "主营收入增速、收入结构变化、新业务占比", weight: 20 },
+      { id: "moat", name: "竞争护城河", desc: "竞争对手威胁、市场份额趋势、替代品风险", weight: 15 },
+      { id: "product", name: "产品/技术迭代", desc: "产品路线图交付、新功能验证、技术壁垒", weight: 15 },
+      { id: "supply", name: "供需动态", desc: "解锁/增发压力、需求真实性（投机vs结构性）", weight: 15 },
+      { id: "macro", name: "宏观环境", desc: "利率路径、地缘事件、行业监管政策", weight: 15 },
+      { id: "adoption", name: "机构参与/背书", desc: "大玩家入场、合作伙伴质量、分析师覆盖", weight: 10 },
+      { id: "valuation", name: "估值vs基本面差距", desc: "当前价格隐含的假设 vs 实际数据", weight: 10 },
+    ],
+  },
+  crypto_perp: {
+    name: "Crypto Perp DEX (如HYPE)",
+    builtin: true,
+    dimensions: [
+      { id: "volume", name: "交易量与协议收入", desc: "日交易量趋势、手续费收入、回购/销毁力度", weight: 20 },
+      { id: "moat", name: "竞争格局", desc: "vs CEX深度、vs其他DEX(Light/Aster)、流动性优势", weight: 15 },
+      { id: "product", name: "产品迭代", desc: "HIP-3/HIP-4进展、新资产上架质量、预言机/预测市场", weight: 15 },
+      { id: "tokenomics", name: "代币经济", desc: "解锁节奏、回购vs抛压、USDH供应量增长", weight: 15 },
+      { id: "macro", name: "宏观与大盘", desc: "BTC趋势、加密整体risk-on/off、大宗商品波动率", weight: 10 },
+      { id: "adoption", name: "机构与生态背书", desc: "Tether/标普等参与、做市商深度、KOL叙事", weight: 15 },
+      { id: "valuation", name: "估值差距", desc: "FDV vs协议收入年化、vs同类项目对比", weight: 10 },
+    ],
+  },
+  stablecoin_infra: {
+    name: "稳定币基础设施 (如CRCL)",
+    builtin: true,
+    dimensions: [
+      { id: "supply", name: "稳定币供应量", desc: "USDC流通量、增速、链上分布、vs USDT份额", weight: 20 },
+      { id: "interest", name: "利差收入", desc: "储备回报率、利率路径预期、降息次数变化", weight: 20 },
+      { id: "newbiz", name: "新业务线", desc: "CPN交易量、USYC AUM、EURC增长、Arc链进展", weight: 15 },
+      { id: "demand", name: "需求性质", desc: "投机vs真实使用（中东汇款、DeFi抵押、AI支付）", weight: 15 },
+      { id: "regulation", name: "监管环境", desc: "GENIUS法案、OCC银行牌照、全球稳定币立法", weight: 10 },
+      { id: "adoption", name: "合作伙伴与机构", desc: "Visa/Intuit/Apple合作、分析师升级、机构持仓", weight: 10 },
+      { id: "valuation", name: "估值差距", desc: "当前市值隐含的USDC增长假设 vs 实际链上数据", weight: 10 },
+    ],
+  },
+  cloud_saas: {
+    name: "云服务+软件 (如ORCL/GOOG)",
+    builtin: true,
+    dimensions: [
+      { id: "arr", name: "收入增速与质量", desc: "ARR/RPO增速、续约率、净收入留存率(NRR)、递延收入", weight: 20 },
+      { id: "cloud", name: "云业务规模化", desc: "IaaS/PaaS增速、GPU产能扩张、数据中心capex回报周期", weight: 20 },
+      { id: "margin", name: "利润率趋势", desc: "毛利率走向、运营杠杆、FCF margin、规模效应", weight: 15 },
+      { id: "ai", name: "AI变现能力", desc: "AI产品渗透率、AI带来的增量收入、seat-based vs usage-based转型", weight: 15 },
+      { id: "moat", name: "客户锁定与护城河", desc: "迁移成本、数据moat、生态粘性、大客户集中度", weight: 10 },
+      { id: "competition", name: "竞争格局", desc: "vs AWS/Azure/GCP份额变化、价格战风险、开源替代威胁", weight: 10 },
+      { id: "valuation", name: "估值合理性", desc: "EV/Revenue、P/FCF vs增速、隐含的增长假设是否现实", weight: 10 },
+    ],
+  },
+};
+
+const MIN_SCORE = -5, MAX_SCORE = 5;
+
+function getScoreColor(s) {
+  if (s <= -4) return "#dc2626"; if (s <= -2) return "#ef4444"; if (s <= -1) return "#f97316";
+  if (s === 0) return "#737373"; if (s <= 1) return "#a3e635"; if (s <= 2) return "#22d3ee";
+  if (s <= 4) return "#3b82f6"; return "#10b981";
+}
+function getScoreColorBg(s) { return getScoreColor(s) + "18"; }
+function getOverallLabel(s) {
+  if (s >= 3) return { text: "强烈看多", color: "#10b981", emoji: "🟢" };
+  if (s >= 1.5) return { text: "看多", color: "#3b82f6", emoji: "🔵" };
+  if (s >= 0.5) return { text: "偏多", color: "#22d3ee", emoji: "🔵" };
+  if (s > -0.5) return { text: "中性", color: "#737373", emoji: "⚪" };
+  if (s > -1.5) return { text: "偏空", color: "#f97316", emoji: "🟠" };
+  if (s > -3) return { text: "看空", color: "#ef4444", emoji: "🔴" };
+  return { text: "强烈看空", color: "#dc2626", emoji: "🔴" };
+}
+function calcOverall(d) { const tw = d.reduce((s, x) => s + x.weight, 0); return tw ? Math.round(d.reduce((s, x) => s + x.score * x.weight, 0) / tw * 100) / 100 : 0; }
+
+const io = {
+  save: async (k, d) => { try { await window.storage.set(k, JSON.stringify(d)); return true; } catch { return false; } },
+  load: async (k) => { try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; } catch { return null; } },
+};
+
+function ScoreSlider({ value, onChange }) {
+  const [drag, setDrag] = useState(false);
+  const pct = ((value - MIN_SCORE) / (MAX_SCORE - MIN_SCORE)) * 100;
+  const col = getScoreColor(value);
+  const calc = (e) => { const r = e.currentTarget.getBoundingClientRect(); onChange(Math.round(MIN_SCORE + Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * (MAX_SCORE - MIN_SCORE))); };
+  return (
+    <div style={{ padding: "4px 0" }}>
+      <div style={{ position: "relative", height: 22, cursor: "pointer", userSelect: "none", margin: "6px 8px" }}
+        onClick={calc} onMouseDown={() => setDrag(true)} onMouseUp={() => setDrag(false)}
+        onMouseLeave={() => setDrag(false)} onMouseMove={e => drag && calc(e)}>
+        <div style={{ position: "absolute", left: "50%", top: 4, bottom: 4, width: 1, background: "#404040" }} />
+        {[...Array(11)].map((_, i) => i - 5).map(t => (
+          <div key={t} style={{ position: "absolute", width: 1, background: t === 0 ? "#525252" : "#1a1a1a", left: `${((t + 5) / 10) * 100}%`, transform: "translateX(-50%)", height: t === 0 ? 12 : t % 5 === 0 ? 10 : 6, top: t === 0 ? 5 : t % 5 === 0 ? 6 : 8 }} />
+        ))}
+        <div style={{ position: "absolute", top: 8, height: 6, borderRadius: 3, background: col, opacity: 0.5, transition: "all 0.15s",
+          ...(value >= 0 ? { left: "50%", width: `${(value / 5) * 50}%` } : { right: "50%", width: `${(Math.abs(value) / 5) * 50}%` }) }} />
+        <div style={{ position: "absolute", top: 2, width: 18, height: 18, borderRadius: 9, transform: "translateX(-50%)", transition: "left 0.15s", left: `${pct}%`, background: col, boxShadow: `0 0 8px ${col}66`, zIndex: 2 }}>
+          <span style={{ position: "absolute", top: -20, left: "50%", transform: "translateX(-50%)", fontSize: 11, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: "#e5e5e5", whiteSpace: "nowrap" }}>{value > 0 ? "+" : ""}{value}</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontFamily: "'JetBrains Mono', monospace", margin: "4px 8px 0", opacity: 0.5 }}>
+        <span style={{ color: "#ef4444" }}>−5</span><span style={{ color: "#737373" }}>0</span><span style={{ color: "#10b981" }}>+5</span>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [assets, setAssets] = useState({});
+  const [customTmpls, setCustomTmpls] = useState({});
+  const [act, setAct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [ss, setSs] = useState("");
+  const [view, setView] = useState("dims"); // dims | history | weights
+  const [mod, setMod] = useState(null); // newAsset | addDim | saveTmpl | manageTmpl
+  const [editNote, setEditNote] = useState(null);
+  const [noteText, setNoteText] = useState("");
+  // form states
+  const [fName, setFName] = useState("");
+  const [fTmpl, setFTmpl] = useState("default");
+  const [fDimName, setFDimName] = useState("");
+  const [fDimDesc, setFDimDesc] = useState("");
+  const [fDimW, setFDimW] = useState(10);
+  const [fTmplName, setFTmplName] = useState("");
+
+  useEffect(() => { (async () => {
+    setLoading(true);
+    const [d, t] = await Promise.all([io.load("fa-v3-assets"), io.load("fa-v3-tmpls")]);
+    if (d && Object.keys(d).length) { setAssets(d); setAct(Object.keys(d)[0]); }
+    if (t) setCustomTmpls(t);
+    setLoading(false);
+  })(); }, []);
+
+  const persist = useCallback(async (d) => { setSs("s"); const ok = await io.save("fa-v3-assets", d); setSs(ok ? "ok" : "err"); setTimeout(() => setSs(""), 1200); }, []);
+  const persistT = async (t) => { setCustomTmpls(t); await io.save("fa-v3-tmpls", t); };
+
+  const allT = { ...BUILTIN_TEMPLATES, ...customTmpls };
+  const asset = act ? assets[act] : null;
+  const overall = asset ? calcOverall(asset.dimensions) : 0;
+  const ol = getOverallLabel(overall);
+  const tw = asset ? asset.dimensions.reduce((s, d) => s + d.weight, 0) : 0;
+
+  const up = (fn) => { const u = { ...assets }; fn(u); setAssets(u); persist(u); };
+
+  const addAsset = () => { if (!fName.trim()) return; const id = fName.trim().replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, "") + Date.now().toString(36); const dims = (allT[fTmpl] || allT.default).dimensions; up(u => { u[id] = { name: fName.trim(), dimensions: dims.map(d => ({ ...d, score: 0, note: "" })), snapshots: [], createdAt: new Date().toISOString() }; }); setAct(id); setMod(null); setFName(""); setFTmpl("default"); };
+  const delAsset = (id) => { up(u => { delete u[id]; }); setAct(Object.keys(assets).filter(k => k !== id)[0] || null); };
+  const setScore = (i, v) => up(u => { u[act].dimensions[i].score = Math.max(MIN_SCORE, Math.min(MAX_SCORE, v)); });
+  const setWeight = (i, w) => up(u => { u[act].dimensions[i].weight = Math.max(0, Math.min(100, w)); });
+  const saveNt = (i) => { up(u => { u[act].dimensions[i].note = noteText; }); setEditNote(null); setNoteText(""); };
+  const addDim = () => { if (!fDimName.trim()) return; up(u => { u[act].dimensions.push({ id: "c" + Date.now().toString(36), name: fDimName.trim(), desc: fDimDesc.trim() || "自定义", weight: fDimW, score: 0, note: "" }); }); setMod(null); setFDimName(""); setFDimDesc(""); setFDimW(10); };
+  const rmDim = (i) => up(u => { u[act].dimensions.splice(i, 1); });
+  const snap = () => up(u => { const a = u[act]; a.snapshots = a.snapshots || []; a.snapshots.unshift({ date: new Date().toISOString(), dimensions: a.dimensions.map(d => ({ id: d.id, name: d.name, score: d.score, weight: d.weight })), overall: calcOverall(a.dimensions) }); if (a.snapshots.length > 50) a.snapshots.length = 50; });
+  const delSnap = (i) => up(u => { u[act].snapshots.splice(i, 1); });
+  const saveTmpl = () => { if (!fTmplName.trim() || !asset) return; const k = "u" + Date.now().toString(36); persistT({ ...customTmpls, [k]: { name: fTmplName.trim(), builtin: false, dimensions: asset.dimensions.map(d => ({ id: d.id, name: d.name, desc: d.desc, weight: d.weight })) } }); setMod(null); setFTmplName(""); };
+  const delTmpl = (k) => { const t = { ...customTmpls }; delete t[k]; persistT(t); };
+
+  if (loading) return <div style={S.ctn}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22d3ee" }} /></div></div>;
+
+  return (
+    <div style={S.ctn}>
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+      <div style={S.hdr}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <h1 style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f5", margin: 0 }}>基本面追踪器</h1>
+          <span style={{ fontSize: 9, color: "#262626", fontFamily: "JM", letterSpacing: "0.1em" }}>v3</span>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button onClick={() => setMod("manageTmpl")} style={{ ...S.btnA, fontSize: 10, padding: "3px 8px" }}>模板管理</button>
+          <span style={{ fontSize: 10, fontFamily: "JM", color: ss === "ok" ? "#10b981" : ss === "err" ? "#ef4444" : "#262626" }}>{ss === "s" ? "..." : ss === "ok" ? "✓" : ss === "err" ? "✗" : ""}</span>
+        </div>
+      </div>
+
+      <div style={S.tabs}>
+        {Object.entries(assets).map(([id, a]) => { const o = calcOverall(a.dimensions), l = getOverallLabel(o); return (
+          <button key={id} onClick={() => { setAct(id); setView("dims"); }} style={{ ...S.tab, ...(act === id ? S.tabOn : {}) }}>
+            <span>{a.name}</span><span style={{ fontFamily: "JM", fontSize: 10, fontWeight: 600, color: l.color }}>{o > 0 ? "+" : ""}{o}</span>
+          </button>
+        ); })}
+        <button onClick={() => setMod("newAsset")} style={S.addBtn}>+</button>
+      </div>
+
+      {/* Modals */}
+      {mod === "newAsset" && <Overlay close={() => setMod(null)}>
+        <h3 style={S.mh}>添加标的</h3>
+        <input style={S.inp} placeholder="名称 (HYPE, CRCL, ORCL...)" value={fName} onChange={e => setFName(e.target.value)} onKeyDown={e => e.key === "Enter" && addAsset()} autoFocus />
+        <div style={{ marginTop: 14 }}>
+          <p style={{ fontSize: 11, color: "#404040", margin: "0 0 8px" }}>模板:</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 260, overflowY: "auto" }}>
+            {Object.entries(allT).map(([k, t]) => (
+              <button key={k} onClick={() => setFTmpl(k)} style={{ ...S.tmpl, ...(fTmpl === k ? { borderColor: "#22d3ee", background: "rgba(34,211,238,0.04)" } : {}) }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: "#e5e5e5" }}>{t.name}</span>
+                  {!t.builtin && <span style={{ fontSize: 9, color: "#404040", background: "#141414", padding: "1px 5px", borderRadius: 3 }}>自定义</span>}
+                </div>
+                <span style={{ fontSize: 10, color: "#333" }}>{t.dimensions.map(d => d.name).join(" · ")}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={S.mf}><button onClick={() => setMod(null)} style={S.btnG}>取消</button><button onClick={addAsset} style={S.btnC}>创建</button></div>
+      </Overlay>}
+
+      {mod === "addDim" && <Overlay close={() => setMod(null)}>
+        <h3 style={S.mh}>添加维度</h3>
+        <input style={S.inp} placeholder="维度名称" value={fDimName} onChange={e => setFDimName(e.target.value)} autoFocus />
+        <input style={{ ...S.inp, marginTop: 8 }} placeholder="描述 (可选)" value={fDimDesc} onChange={e => setFDimDesc(e.target.value)} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
+          <span style={{ fontSize: 11, color: "#525252" }}>权重:</span>
+          <input type="range" min={5} max={30} value={fDimW} onChange={e => setFDimW(+e.target.value)} style={{ flex: 1, accentColor: "#22d3ee" }} />
+          <span style={{ fontSize: 12, fontFamily: "JM", color: "#e5e5e5", minWidth: 28 }}>{fDimW}%</span>
+        </div>
+        <div style={S.mf}><button onClick={() => setMod(null)} style={S.btnG}>取消</button><button onClick={addDim} style={S.btnC}>添加</button></div>
+      </Overlay>}
+
+      {mod === "saveTmpl" && <Overlay close={() => setMod(null)}>
+        <h3 style={S.mh}>保存为模板</h3>
+        <p style={{ fontSize: 11, color: "#404040", margin: "0 0 12px" }}>将 {asset?.name} 的维度配置保存为可复用模板</p>
+        <input style={S.inp} placeholder="模板名称" value={fTmplName} onChange={e => setFTmplName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveTmpl()} autoFocus />
+        {asset && <div style={{ marginTop: 10, padding: 10, background: "#080808", borderRadius: 6, border: "1px solid #141414" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{asset.dimensions.map(d => <span key={d.id} style={{ fontSize: 10, color: "#525252", background: "#111", padding: "2px 6px", borderRadius: 3 }}>{d.name} ×{d.weight}%</span>)}</div>
+        </div>}
+        <div style={S.mf}><button onClick={() => setMod(null)} style={S.btnG}>取消</button><button onClick={saveTmpl} style={S.btnC}>保存</button></div>
+      </Overlay>}
+
+      {mod === "manageTmpl" && <Overlay close={() => setMod(null)}>
+        <h3 style={S.mh}>模板管理</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 400, overflowY: "auto" }}>
+          {Object.entries(allT).map(([k, t]) => (
+            <div key={k} style={{ padding: "10px 12px", background: "#080808", borderRadius: 6, border: "1px solid #141414" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, color: "#e5e5e5", fontWeight: 500 }}>{t.name}</span>
+                  <span style={{ fontSize: 9, color: "#333", background: "#111", padding: "1px 5px", borderRadius: 3 }}>{t.builtin ? "内置" : "自定义"}</span>
+                </div>
+                {!t.builtin && <button onClick={() => { if (window.confirm(`删除"${t.name}"?`)) delTmpl(k); }} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 11 }}>✕</button>}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>{t.dimensions.map(d => <span key={d.id} style={{ fontSize: 9, color: "#404040", background: "#0f0f0f", padding: "2px 5px", borderRadius: 2 }}>{d.name}</span>)}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ ...S.mf, justifyContent: "center" }}><button onClick={() => setMod(null)} style={S.btnG}>关闭</button></div>
+      </Overlay>}
+
+      {/* Main */}
+      {!asset ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 12 }}>
+          <div style={{ fontSize: 40, color: "#111" }}>◈</div>
+          <p style={{ color: "#262626", fontSize: 13 }}>添加标的开始追踪</p>
+          <button onClick={() => setMod("newAsset")} style={S.btnC}>+ 添加</button>
+        </div>
+      ) : (
+        <div style={{ padding: "12px 20px 40px" }}>
+          {/* Overall */}
+          <div style={S.oc}>
+            <div style={{ flex: 1, minWidth: 150 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ color: ol.color, fontSize: 32, fontWeight: 700, fontFamily: "JM" }}>{overall > 0 ? "+" : ""}{overall}</span>
+                <span style={{ fontSize: 12, color: ol.color }}>{ol.emoji} {ol.text}</span>
+              </div>
+              <div style={{ position: "relative", height: 5, background: "#111", borderRadius: 3, marginTop: 10, overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, bottom: 0, borderRadius: 3, background: ol.color, opacity: 0.5, transition: "all 0.3s",
+                  ...(overall >= 0 ? { left: "50%", width: `${(overall / 5) * 50}%` } : { right: "50%", width: `${(Math.abs(overall) / 5) * 50}%` }) }} />
+                <div style={{ position: "absolute", left: "50%", top: -1, bottom: -1, width: 1, background: "#333" }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              <button onClick={snap} style={S.btnA}>📸 快照</button>
+              <button onClick={() => setView(view === "history" ? "dims" : "history")} style={{ ...S.btnA, ...(view === "history" ? { borderColor: "#22d3ee33", color: "#22d3ee" } : {}) }}>📊 历史{asset.snapshots?.length ? ` (${asset.snapshots.length})` : ""}</button>
+              <button onClick={() => setView(view === "weights" ? "dims" : "weights")} style={{ ...S.btnA, ...(view === "weights" ? { borderColor: "#22d3ee33", color: "#22d3ee" } : {}) }}>⚖️ 权重</button>
+              <button onClick={() => setMod("addDim")} style={S.btnA}>＋维度</button>
+              <button onClick={() => setMod("saveTmpl")} style={S.btnA}>💾 存模板</button>
+              <button onClick={() => { if (window.confirm(`删除 ${asset.name}?`)) delAsset(act); }} style={{ ...S.btnA, color: "#262626" }}>🗑</button>
+            </div>
+          </div>
+
+          {/* Weights */}
+          {view === "weights" && <div style={S.pnl}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+              <h3 style={S.ph}>权重</h3>
+              <span style={{ fontFamily: "JM", fontSize: 11, color: tw === 100 ? "#10b981" : "#f97316" }}>Σ {tw}%</span>
+            </div>
+            {asset.dimensions.map((d, i) => (
+              <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #0f0f0f" }}>
+                <span style={{ fontSize: 11, color: "#a3a3a3", minWidth: 85, flex: "0 0 85px" }}>{d.name}</span>
+                <button onClick={() => setWeight(i, d.weight - 5)} style={S.wBtn}>−</button>
+                <span style={{ fontFamily: "JM", fontSize: 11, color: "#e5e5e5", width: 26, textAlign: "center" }}>{d.weight}</span>
+                <button onClick={() => setWeight(i, d.weight + 5)} style={S.wBtn}>+</button>
+                <div style={{ flex: 1, height: 3, background: "#0f0f0f", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${d.weight}%`, background: "#22d3ee", opacity: 0.35, borderRadius: 2, transition: "width 0.2s" }} />
+                </div>
+              </div>
+            ))}
+          </div>}
+
+          {/* History */}
+          {view === "history" && <div style={S.pnl}>
+            <h3 style={S.ph}>历史快照</h3>
+            {!asset.snapshots?.length ? <p style={{ color: "#262626", fontSize: 12, marginTop: 8 }}>暂无</p> : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                {asset.snapshots.map((sn, i) => { const sl = getOverallLabel(sn.overall); return (
+                  <div key={i} style={{ padding: "10px 12px", background: "#080808", borderRadius: 6, border: "1px solid #111" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: "#333", fontFamily: "JM" }}>{new Date(sn.date).toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ color: sl.color, fontFamily: "JM", fontWeight: 600, fontSize: 13 }}>{sn.overall > 0 ? "+" : ""}{sn.overall} {sl.emoji}</span>
+                        <button onClick={() => { if (window.confirm("删除此快照?")) delSnap(i); }} style={{ background: "none", border: "none", color: "#1a1a1a", cursor: "pointer", fontSize: 12, padding: "2px 4px" }}>✕</button>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {sn.dimensions.map(d => <span key={d.id} style={{ padding: "2px 6px", borderRadius: 3, fontSize: 10, fontFamily: "JM", fontWeight: 500, color: getScoreColor(d.score), background: getScoreColorBg(d.score) }}>{d.name.slice(0, 5)} {d.score > 0 ? "+" : ""}{d.score}</span>)}
+                    </div>
+                  </div>
+                ); })}
+              </div>
+            )}
+          </div>}
+
+          {/* Dimensions */}
+          {view === "dims" && <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {asset.dimensions.map((dim, idx) => { const col = getScoreColor(dim.score); const ct = tw ? Math.round((dim.score * dim.weight / tw) * 100) / 100 : 0; return (
+              <div key={dim.id} style={{ background: "#0d0d0d", borderRadius: 8, padding: "14px 16px", border: "1px solid #111", borderLeft: `3px solid ${col}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <h4 style={{ fontSize: 13, fontWeight: 600, color: "#e5e5e5", margin: 0 }}>{dim.name}</h4>
+                      <button onClick={() => { if (window.confirm(`删除"${dim.name}"?`)) rmDim(idx); }} style={{ background: "none", border: "none", color: "#141414", cursor: "pointer", fontSize: 10, padding: "0 3px" }}>✕</button>
+                    </div>
+                    <p style={{ fontSize: 10, color: "#333", margin: "2px 0 0" }}>{dim.desc}</p>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
+                    <span style={{ fontSize: 9, color: "#262626", fontFamily: "JM" }}>×{dim.weight}%</span>
+                    <span style={{ fontSize: 14, fontFamily: "JM", fontWeight: 700, color: ct ? col : "#333" }}>{ct > 0 ? "+" : ""}{ct}</span>
+                  </div>
+                </div>
+                <ScoreSlider value={dim.score} onChange={v => setScore(idx, v)} />
+                <div style={{ display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" }}>
+                  {[-5, -3, -1, 0, 1, 3, 5].map(v => (
+                    <button key={v} onClick={() => setScore(idx, v)} style={{
+                      padding: "3px 9px", borderRadius: 4, fontSize: 10, fontFamily: "JM", fontWeight: dim.score === v ? 700 : 400,
+                      background: dim.score === v ? getScoreColorBg(v) : "transparent", border: `1px solid ${dim.score === v ? getScoreColor(v) + "44" : "#111"}`,
+                      color: dim.score === v ? getScoreColor(v) : "#262626", cursor: "pointer", transition: "all 0.12s",
+                    }}>{v > 0 ? "+" : ""}{v}</button>
+                  ))}
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  {editNote === idx ? (
+                    <div>
+                      <textarea style={S.ta} value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="关键数据、判断依据..." autoFocus rows={3} />
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 5 }}>
+                        <button onClick={() => { setEditNote(null); setNoteText(""); }} style={S.btnG}>取消</button>
+                        <button onClick={() => saveNt(idx)} style={{ ...S.btnC, padding: "4px 12px", fontSize: 11 }}>保存</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setEditNote(idx); setNoteText(dim.note || ""); }} style={S.nb}>
+                      {dim.note ? <span style={{ color: "#525252", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{dim.note}</span> : <span style={{ color: "#141414" }}>+ 笔记</span>}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ); })}
+          </div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Overlay({ close, children }) {
+  return (
+    <div style={S.ov} onClick={close}><div style={S.md} onClick={e => e.stopPropagation()}>{children}</div></div>
+  );
+}
+
+const S = {
+  ctn: { minHeight: "100vh", background: "#0a0a0a", color: "#e5e5e5", fontFamily: "'Noto Sans SC', 'JetBrains Mono', sans-serif" },
+  hdr: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 12px", borderBottom: "1px solid #111" },
+  tabs: { display: "flex", gap: 4, padding: "8px 20px", borderBottom: "1px solid #111", overflowX: "auto", flexWrap: "wrap" },
+  tab: { padding: "5px 12px", background: "transparent", border: "1px solid #1a1a1a", borderRadius: 5, color: "#525252", cursor: "pointer", fontSize: 12, fontFamily: "'Noto Sans SC'", display: "flex", gap: 7, alignItems: "center", whiteSpace: "nowrap" },
+  tabOn: { background: "#111", borderColor: "#222", color: "#f5f5f5" },
+  addBtn: { width: 28, height: 28, borderRadius: 5, background: "transparent", border: "1px dashed #1a1a1a", color: "#1a1a1a", cursor: "pointer", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" },
+  ov: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 },
+  md: { background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 10, padding: 22, width: "100%", maxWidth: 420 },
+  mh: { fontSize: 15, fontWeight: 600, color: "#f5f5f5", margin: "0 0 16px" },
+  mf: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 },
+  inp: { width: "100%", padding: "8px 12px", background: "#080808", border: "1px solid #1a1a1a", borderRadius: 6, color: "#e5e5e5", fontSize: 13, fontFamily: "'Noto Sans SC'", outline: "none", boxSizing: "border-box" },
+  tmpl: { padding: "8px 12px", background: "#080808", border: "1px solid #141414", borderRadius: 6, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 3 },
+  btnG: { padding: "6px 14px", background: "transparent", border: "1px solid #1a1a1a", borderRadius: 5, color: "#525252", cursor: "pointer", fontSize: 12, fontFamily: "'Noto Sans SC'" },
+  btnC: { padding: "6px 18px", background: "#22d3ee", border: "none", borderRadius: 5, color: "#0a0a0a", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "'Noto Sans SC'" },
+  btnA: { padding: "5px 10px", background: "rgba(255,255,255,0.02)", border: "1px solid #141414", borderRadius: 5, color: "#525252", cursor: "pointer", fontSize: 11, fontFamily: "'Noto Sans SC'", whiteSpace: "nowrap" },
+  oc: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "#0b0b0b", borderRadius: 8, border: "1px solid #111", marginBottom: 10, flexWrap: "wrap", gap: 10 },
+  pnl: { background: "#0b0b0b", border: "1px solid #111", borderRadius: 8, padding: 16, marginBottom: 10 },
+  ph: { fontSize: 13, fontWeight: 600, color: "#d4d4d4", margin: 0 },
+  wBtn: { width: 22, height: 22, borderRadius: 4, background: "#0f0f0f", border: "1px solid #1a1a1a", color: "#525252", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 },
+  ta: { width: "100%", padding: "8px 10px", background: "#080808", border: "1px solid #1a1a1a", borderRadius: 5, color: "#d4d4d4", fontSize: 12, fontFamily: "'Noto Sans SC'", resize: "vertical", outline: "none", lineHeight: 1.6, boxSizing: "border-box" },
+  nb: { width: "100%", padding: "5px 10px", background: "transparent", border: "1px solid #0f0f0f", borderRadius: 4, cursor: "pointer", textAlign: "left", fontSize: 11, fontFamily: "'Noto Sans SC'" },
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(function(){});</script>
+<script src="nav-dock.js"></script>
+</body>
+</html>
