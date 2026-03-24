@@ -200,18 +200,18 @@ const TRACK_META = {
 };
   
 const TAG_OPTIONS = {
-past:    [“过热信号”,“政策变动”,“公司事件”,“市场里程碑”,“黑天鹅”,“监管”,“地缘政治”,“贵金属”,“财报”],
-ongoing: [“关税”,“战争”,“货币政策”,“科技竞争”,“监管风暴”,“政治”,“供应链”,“贵金属牛市”],
-future:  [“财报”,“会议”,“政策”,“IPO”,“访问”,“数据发布”,“到期日”,“贵金属”],
+past:    ["过热信号","政策变动","公司事件","市场里程碑","黑天鹅","监管","地缘政治","贵金属","财报"],
+ongoing: ["关税","战争","货币政策","科技竞争","监管风暴","政治","供应链","贵金属牛市"],
+future:  ["财报","会议","政策","IPO","访问","数据发布","到期日","贵金属"],
 };
 
-const CRYPTO_COINS = [“BTC”,“ETH”,“SOL”,“HYPE”];
+const CRYPTO_COINS = ["BTC","ETH","SOL","HYPE"];
 
 const STATUS_MAP = {
-escalating: { label: “升级中”, color: “#ef4444” },
-active:     { label: “进行中”, color: “#fb923c” },
-cooling:    { label: “降温中”, color: “#f59e0b” },
-resolved:   { label: “已结束”, color: “#6b6b80” },
+escalating: { label: "升级中", color: "#ef4444" },
+active:     { label: "进行中", color: "#fb923c" },
+cooling:    { label: "降温中", color: "#f59e0b" },
+resolved:   { label: "已结束", color: "#6b6b80" },
 };
 
 /* ═══════════════════════════════════════════
@@ -219,129 +219,129 @@ SEED DATA — 全部日期已联网校验
 ═══════════════════════════════════════════ */
 const SEED_PAST = [
 // ─── 2024 ───
-{ id:“p01”, date:“2024-01-10”, track:“crypto”, title:“SEC批准首批比特币现货ETF”, tags:[“政策变动”,“市场里程碑”], desc:“11只BTC现货ETF获批。BlackRock IBIT年末AUM超$500亿，机构正式入场加密资产”, coin:“BTC”, importance:3 },
-{ id:“p02”, date:“2024-04-20”, track:“crypto”, title:“比特币第四次减半”, tags:[“市场里程碑”], desc:“区块840,000。挖矿奖励6.25→3.125 BTC。供给收紧为后续牛市蓄力”, coin:“BTC”, importance:2 },
-{ id:“p03”, date:“2024-09-18”, track:“us”, title:“鲍威尔启动降息周期：首次降50bp”, tags:[“政策变动”,“市场里程碑”], desc:“美联储四年来首次降息，直接50bp至4.75-5%。终结自2022年3月以来的紧缩周期”, importance:3 },
-{ id:“p04”, date:“2024-09-24”, track:“asia”, title:“924新政：央行+证监会+金融监管总局三箭齐发”, tags:[“政策变动”,“市场里程碑”], desc:“一揽子金融政策：降准降息+创设新工具直接支持股市。上证单日飙涨4.15%，A股历史性拐点”, importance:3 },
-{ id:“p05”, date:“2024-10-08”, track:“asia”, title:“A股单日成交3.48万亿，史上最高”, tags:[“过热信号”,“市场里程碑”], desc:“国庆后开盘逼近涨停，上证最高3674。换手率9%。10月全月新开户684万户创五年新高”, importance:3 },
-{ id:“p06”, date:“2024-11-05”, track:“us”, title:“特朗普赢得2024大选”, tags:[“政策变动”,“市场里程碑”], desc:“共和党横扫白宫+参众两院。BTC当日从$69k起飞，美股全线暴涨。加密友好政策预期拉满”, importance:3 },
-{ id:“p07”, date:“2024-12-05”, track:“crypto”, title:“BTC首次突破$100,000”, tags:[“市场里程碑”], desc:“最高$104,000。年内涨幅126%。特朗普胜选+ETF资金流入+减半效应三重催化”, coin:“BTC”, importance:3 },
-{ id:“p08”, date:“2024-12-18”, track:“us”, title:“美联储年内第三次降息25bp，鹰派前瞻引暴跌”, tags:[“政策变动”], desc:“利率降至4.25-4.5%。点阵图暗示2025仅2次降息（前4次），鲍威尔称通胀’令人沮丧’。纳指暴跌3%，道指九日连跌”, importance:3 },
+{ id:"p01", date:"2024-01-10", track:"crypto", title:"SEC批准首批比特币现货ETF", tags:["政策变动","市场里程碑"], desc:"11只BTC现货ETF获批。BlackRock IBIT年末AUM超$500亿,机构正式入场加密资产", coin:"BTC", importance:3 },
+{ id:"p02", date:"2024-04-20", track:"crypto", title:"比特币第四次减半", tags:["市场里程碑"], desc:"区块840,000。挖矿奖励6.25→3.125 BTC。供给收紧为后续牛市蓄力", coin:"BTC", importance:2 },
+{ id:"p03", date:"2024-09-18", track:"us", title:"鲍威尔启动降息周期：首次降50bp", tags:["政策变动","市场里程碑"], desc:"美联储四年来首次降息,直接50bp至4.75-5%。终结自2022年3月以来的紧缩周期", importance:3 },
+{ id:"p04", date:"2024-09-24", track:"asia", title:"924新政：央行+证监会+金融监管总局三箭齐发", tags:["政策变动","市场里程碑"], desc:"一揽子金融政策：降准降息+创设新工具直接支持股市。上证单日飙涨4.15%,A股历史性拐点", importance:3 },
+{ id:"p05", date:"2024-10-08", track:"asia", title:"A股单日成交3.48万亿,史上最高", tags:["过热信号","市场里程碑"], desc:"国庆后开盘逼近涨停,上证最高3674。换手率9%。10月全月新开户684万户创五年新高", importance:3 },
+{ id:"p06", date:"2024-11-05", track:"us", title:"特朗普赢得2024大选", tags:["政策变动","市场里程碑"], desc:"共和党横扫白宫+参众两院。BTC当日从$69k起飞,美股全线暴涨。加密友好政策预期拉满", importance:3 },
+{ id:"p07", date:"2024-12-05", track:"crypto", title:"BTC首次突破$100,000", tags:["市场里程碑"], desc:"最高$104,000。年内涨幅126%。特朗普胜选+ETF资金流入+减半效应三重催化", coin:"BTC", importance:3 },
+{ id:"p08", date:"2024-12-18", track:"us", title:"美联储年内第三次降息25bp,鹰派前瞻引暴跌", tags:["政策变动"], desc:"利率降至4.25-4.5%。点阵图暗示2025仅2次降息（前4次）,鲍威尔称通胀’令人沮丧’。纳指暴跌3%,道指九日连跌", importance:3 },
 
 // ─── 2025 ───
-{ id:“p09”, date:“2025-01-20”, track:“us”, title:“特朗普宣誓就任第47任总统”, tags:[“政策变动”,“市场里程碑”], desc:“就职演说强调’美国优先’。签署数字资产行政命令成立加密工作组。关税时代开启”, importance:3 },
-{ id:“p10”, date:“2025-02-25”, track:“us”, title:“特朗普全面加征钢铝关税25%”, tags:[“政策变动”,“贵金属”], desc:“对所有进口钢铁和铝征收25%关税，铝价应声跳涨，全球供应链震动”, importance:2 },
-{ id:“p11”, date:“2025-03-14”, track:“us”, title:“黄金首次突破$3,000/oz”, tags:[“市场里程碑”,“贵金属”], desc:“地缘风险+美元走弱+央行持续购金推动金价历史性破3000美元。2025年初至此涨幅约14%”, importance:3 },
-{ id:“p12”, date:“2025-04-02”, track:“us”, title:”‘解放日’关税：全面对等关税震惊全球”, tags:[“地缘政治”,“政策变动”], desc:“对华关税最终升至145%，全球多国遭关税打击。市场巨震，铜铝大幅波动。被称为Liberation Day”, importance:3 },
-{ id:“p13”, date:“2025-06-05”, track:“crypto”, title:“Circle IPO上市纽交所”, tags:[“公司事件”,“市场里程碑”], desc:“USDC发行商Circle成为首家在NYSE上市的稳定币公司，标志加密行业合规化里程碑”, coin:“ETH”, importance:2 },
-{ id:“p14”, date:“2025-06-17”, track:“crypto”, title:“GENIUS Act参议院通过68:30”, tags:[“政策变动”,“市场里程碑”], desc:“美国首部联邦稳定币监管法案。要求1:1美元储备，稳定币不再是证券/商品。17名民主党人跨党投票”, coin:“ETH”, importance:3 },
-{ id:“p15”, date:“2025-07-04”, track:“us”, title:”‘大美丽法案’签署成法”, tags:[“政策变动”,“市场里程碑”], desc:“OBBBA：永久延续2017减税、免税小费/加班/社保、削减Medicaid/SNAP。十年增$3万亿债务。参51:50（万斯打破平局），众218:214”, importance:3 },
-{ id:“p16”, date:“2025-07-18”, track:“crypto”, title:“GENIUS Act签署成法”, tags:[“政策变动”], desc:“众议院308:122通过，特朗普次日签署。美国加密监管新纪元”, coin:“ETH”, importance:2 },
-{ id:“p17”, date:“2025-08-18”, track:“asia”, title:“A股总市值突破100万亿人民币”, tags:[“市场里程碑”,“过热信号”], desc:“924新政近一周年，沪深总市值历史性破百万亿。波动率反降至15.9%”, importance:3 },
-{ id:“p18”, date:“2025-09-10”, track:“us”, title:“Oracle(ORCL)创历史新高$345.72”, tags:[“公司事件”,“财报”], desc:“AI基础设施叙事推动。RPO暴增，云收入占比过半。Larry Ellison的AI数据中心战略获市场狂热追捧”, importance:2 },
-{ id:“p19”, date:“2025-10-10”, track:“crypto”, title:“币安’黑色星期五’宕机，160万人爆仓”, tags:[“黑天鹅”], desc:“加密暴跌叠加币安系统宕机。社交媒体怒斥’关键时刻拔网线’，部分资产脱锚，ADL错误清算。10月13日币安发声明称核心引擎正常”, coin:“BTC”, importance:3 },
-{ id:“p20”, date:“2025-10-17”, track:“us”, title:“黄金突破$4,000/oz”, tags:[“市场里程碑”,“贵金属”], desc:“年内53次刷新历史高点。关税不确定性+央行购金+ETF流入三重驱动。2025全年金价涨66%（1979年以来最佳）”, importance:3 },
-{ id:“p21”, date:“2025-12-18”, track:“us”, title:“美联储2025最后一次降息25bp”, tags:[“政策变动”], desc:“利率降至3.50-3.75%。全年降100bp。声称恢复国债购买$400亿/月，Pomboy称这是变相QE”, importance:2 },
-{ id:“p22”, date:“2025-12-31”, track:“us”, title:“2025年贵金属回顾：金+66%，银+142%，铜+41%”, tags:[“市场里程碑”,“贵金属”], desc:“黄金年终$4,325。白银年涨142%创历史。铜年涨41%为2009年以来最大。全球总需求首破5000吨”, importance:3 },
+{ id:"p09", date:"2025-01-20", track:"us", title:"特朗普宣誓就任第47任总统", tags:["政策变动","市场里程碑"], desc:"就职演说强调’美国优先’。签署数字资产行政命令成立加密工作组。关税时代开启", importance:3 },
+{ id:"p10", date:"2025-02-25", track:"us", title:"特朗普全面加征钢铝关税25%", tags:["政策变动","贵金属"], desc:"对所有进口钢铁和铝征收25%关税,铝价应声跳涨,全球供应链震动", importance:2 },
+{ id:"p11", date:"2025-03-14", track:"us", title:"黄金首次突破$3,000/oz", tags:["市场里程碑","贵金属"], desc:"地缘风险+美元走弱+央行持续购金推动金价历史性破3000美元。2025年初至此涨幅约14%", importance:3 },
+{ id:"p12", date:"2025-04-02", track:"us", title:"‘解放日’关税：全面对等关税震惊全球", tags:["地缘政治","政策变动"], desc:"对华关税最终升至145%,全球多国遭关税打击。市场巨震,铜铝大幅波动。被称为Liberation Day", importance:3 },
+{ id:"p13", date:"2025-06-05", track:"crypto", title:"Circle IPO上市纽交所", tags:["公司事件","市场里程碑"], desc:"USDC发行商Circle成为首家在NYSE上市的稳定币公司,标志加密行业合规化里程碑", coin:"ETH", importance:2 },
+{ id:"p14", date:"2025-06-17", track:"crypto", title:"GENIUS Act参议院通过68:30", tags:["政策变动","市场里程碑"], desc:"美国首部联邦稳定币监管法案。要求1:1美元储备,稳定币不再是证券/商品。17名民主党人跨党投票", coin:"ETH", importance:3 },
+{ id:"p15", date:"2025-07-04", track:"us", title:"‘大美丽法案’签署成法", tags:["政策变动","市场里程碑"], desc:"OBBBA：永久延续2017减税、免税小费/加班/社保、削减Medicaid/SNAP。十年增$3万亿债务。参51:50（万斯打破平局）,众218:214", importance:3 },
+{ id:"p16", date:"2025-07-18", track:"crypto", title:"GENIUS Act签署成法", tags:["政策变动"], desc:"众议院308:122通过,特朗普次日签署。美国加密监管新纪元", coin:"ETH", importance:2 },
+{ id:"p17", date:"2025-08-18", track:"asia", title:"A股总市值突破100万亿人民币", tags:["市场里程碑","过热信号"], desc:"924新政近一周年,沪深总市值历史性破百万亿。波动率反降至15.9%", importance:3 },
+{ id:"p18", date:"2025-09-10", track:"us", title:"Oracle(ORCL)创历史新高$345.72", tags:["公司事件","财报"], desc:"AI基础设施叙事推动。RPO暴增,云收入占比过半。Larry Ellison的AI数据中心战略获市场狂热追捧", importance:2 },
+{ id:"p19", date:"2025-10-10", track:"crypto", title:"币安’黑色星期五’宕机,160万人爆仓", tags:["黑天鹅"], desc:"加密暴跌叠加币安系统宕机。社交媒体怒斥’关键时刻拔网线’,部分资产脱锚,ADL错误清算。10月13日币安发声明称核心引擎正常", coin:"BTC", importance:3 },
+{ id:"p20", date:"2025-10-17", track:"us", title:"黄金突破$4,000/oz", tags:["市场里程碑","贵金属"], desc:"年内53次刷新历史高点。关税不确定性+央行购金+ETF流入三重驱动。2025全年金价涨66%（1979年以来最佳）", importance:3 },
+{ id:"p21", date:"2025-12-18", track:"us", title:"美联储2025最后一次降息25bp", tags:["政策变动"], desc:"利率降至3.50-3.75%。全年降100bp。声称恢复国债购买$400亿/月,Pomboy称这是变相QE", importance:2 },
+{ id:"p22", date:"2025-12-31", track:"us", title:"2025年贵金属回顾：金+66%,银+142%,铜+41%", tags:["市场里程碑","贵金属"], desc:"黄金年终$4,325。白银年涨142%创历史。铜年涨41%为2009年以来最大。全球总需求首破5000吨", importance:3 },
 
 // ─── 2026 ───
-{ id:“p23”, date:“2026-01-26”, track:“us”, title:“黄金突破$5,000/oz，白银破$100”, tags:[“市场里程碑”,“贵金属”], desc:“金价$5,100+，投机买盘涌入。白银同日飙至$110.87创历史。金银比急剧压缩”, importance:3 },
-{ id:“p24”, date:“2026-01-29”, track:“us”, title:“黄金创ATH $5,595/oz”, tags:[“市场里程碑”,“贵金属”], desc:“历史最高点。随后大幅回调至$4,894收月。VanEck称本轮牛市累计涨200%，仅经历第二次10%+回调”, importance:3 },
-{ id:“p25”, date:“2026-02-01”, track:“us”, title:“SpaceX完成收购xAI”, tags:[“公司事件”,“市场里程碑”], desc:“全股票交易，xAI成为SpaceX全资子公司。合并估值$1.25万亿。含Starlink+Grok+X平台。为IPO铺路”, importance:2 },
-{ id:“p30”, date:“2026-02-25”, track:“us”, title:“Nvidia Q4 FY2026财报超预期：Blackwell出货加速”, tags:[“财报”,“公司事件”], desc:“AI数据中心营收暴增，EPS/营收双超预期。但股价微涨——估值已大幅压缩，类似Oracle路径。市场关注capex回报周期”, importance:3 },
-{ id:“p26”, date:“2026-03-04”, track:“asia”, title:“韩股触发熔断：Kospi单日跌12%历史最大跌幅”, tags:[“黑天鹅”,“过热信号”], desc:“伊朗冲突+地缘风险引发恐慌抛售，2024年以来首次熔断。韩元17年新低，半万亿美元市值蒸发。三星/海力士领跌”, importance:3 },
-{ id:“p31”, date:“2026-03-09”, track:“us”, title:“Oracle Q3 FY2026财报超预期15%”, tags:[“财报”,“公司事件”], desc:“EPS $1.79 vs 预期$1.55。营收$17.2B，YoY+22%。AI基础设施收入暴增243%。获TikTok 15%股份。但股价从ATH $345已跌至$155”, importance:2 },
-{ id:“p32”, date:“2026-03-09”, track:“asia”, title:“韩股再次触发熔断：Kospi跌8%”, tags:[“黑天鹅”], desc:“中东局势持续恶化，本月第二次熔断。亚太全线重挫，韩元逼近1500”, importance:3 },
-{ id:“p33”, date:“2026-03-10”, track:“crypto”, title:“Hyperliquid HIP-4 testnet上线：Outcome Contracts预测市场”, tags:[“市场里程碑”,“科技竞争”], desc:“一日到期二元期权首推BTC/HYPE。HIP-3 permissionless perps后又一重大扩展。主网计划2026年内”, coin:“HYPE”, importance:3 },
-{ id:“p34”, date:“2026-03-18”, track:“us”, title:“马斯克加速与SEC和解，SpaceX IPO扫清障碍”, tags:[“公司事件”,“IPO”], desc:“SEC法庭文件显示双方就Twitter持股披露违规和解中。投行希望IPO前了结。目标6月Nasdaq上市”, importance:2 },
-{ id:“p35”, date:“2026-03-18”, track:“asia”, title:“腾讯Q4财报后暴跌6.5%（AI变现不及预期）”, tags:[“财报”,“公司事件”], desc:“营收+13%超预期，但宣布缩减回购增AI capex。阿里同日重挫，合计市值蒸发$660亿。股价年内最大单日跌幅”, importance:3 },
-{ id:“p28”, date:“2026-03-20”, track:“asia”, title:“恒立液压实控人汪立平被留置”, tags:[“公司事件”,“监管”], desc:“千亿’液压茅’掌门被江苏省监委留置。此前家族高位套现29.3亿。常州首富，2025股价翻倍后年初回调9%”, importance:3 },
-{ id:“p29”, date:“2026-03-22”, track:“asia”, title:“三安光电实控人林秀成被国家监委留置”, tags:[“公司事件”,“监管”], desc:“LED及化合物半导体龙头，被国家监察委留置。一周两大千亿龙头实控人落马。三安2025年预亏2-3亿”, importance:3 },
+{ id:"p23", date:"2026-01-26", track:"us", title:"黄金突破$5,000/oz,白银破$100", tags:["市场里程碑","贵金属"], desc:"金价$5,100+,投机买盘涌入。白银同日飙至$110.87创历史。金银比急剧压缩", importance:3 },
+{ id:"p24", date:"2026-01-29", track:"us", title:"黄金创ATH $5,595/oz", tags:["市场里程碑","贵金属"], desc:"历史最高点。随后大幅回调至$4,894收月。VanEck称本轮牛市累计涨200%,仅经历第二次10%+回调", importance:3 },
+{ id:"p25", date:"2026-02-01", track:"us", title:"SpaceX完成收购xAI", tags:["公司事件","市场里程碑"], desc:"全股票交易,xAI成为SpaceX全资子公司。合并估值$1.25万亿。含Starlink+Grok+X平台。为IPO铺路", importance:2 },
+{ id:"p30", date:"2026-02-25", track:"us", title:"Nvidia Q4 FY2026财报超预期：Blackwell出货加速", tags:["财报","公司事件"], desc:"AI数据中心营收暴增,EPS/营收双超预期。但股价微涨——估值已大幅压缩,类似Oracle路径。市场关注capex回报周期", importance:3 },
+{ id:"p26", date:"2026-03-04", track:"asia", title:"韩股触发熔断：Kospi单日跌12%历史最大跌幅", tags:["黑天鹅","过热信号"], desc:"伊朗冲突+地缘风险引发恐慌抛售,2024年以来首次熔断。韩元17年新低,半万亿美元市值蒸发。三星/海力士领跌", importance:3 },
+{ id:"p31", date:"2026-03-09", track:"us", title:"Oracle Q3 FY2026财报超预期15%", tags:["财报","公司事件"], desc:"EPS $1.79 vs 预期$1.55。营收$17.2B,YoY+22%。AI基础设施收入暴增243%。获TikTok 15%股份。但股价从ATH $345已跌至$155", importance:2 },
+{ id:"p32", date:"2026-03-09", track:"asia", title:"韩股再次触发熔断：Kospi跌8%", tags:["黑天鹅"], desc:"中东局势持续恶化,本月第二次熔断。亚太全线重挫,韩元逼近1500", importance:3 },
+{ id:"p33", date:"2026-03-10", track:"crypto", title:"Hyperliquid HIP-4 testnet上线：Outcome Contracts预测市场", tags:["市场里程碑","科技竞争"], desc:"一日到期二元期权首推BTC/HYPE。HIP-3 permissionless perps后又一重大扩展。主网计划2026年内", coin:"HYPE", importance:3 },
+{ id:"p34", date:"2026-03-18", track:"us", title:"马斯克加速与SEC和解,SpaceX IPO扫清障碍", tags:["公司事件","IPO"], desc:"SEC法庭文件显示双方就Twitter持股披露违规和解中。投行希望IPO前了结。目标6月Nasdaq上市", importance:2 },
+{ id:"p35", date:"2026-03-18", track:"asia", title:"腾讯Q4财报后暴跌6.5%（AI变现不及预期）", tags:["财报","公司事件"], desc:"营收+13%超预期,但宣布缩减回购增AI capex。阿里同日重挫,合计市值蒸发$660亿。股价年内最大单日跌幅", importance:3 },
+{ id:"p28", date:"2026-03-20", track:"asia", title:"恒立液压实控人汪立平被留置", tags:["公司事件","监管"], desc:"千亿’液压茅’掌门被江苏省监委留置。此前家族高位套现29.3亿。常州首富,2025股价翻倍后年初回调9%", importance:3 },
+{ id:"p29", date:"2026-03-22", track:"asia", title:"三安光电实控人林秀成被国家监委留置", tags:["公司事件","监管"], desc:"LED及化合物半导体龙头,被国家监察委留置。一周两大千亿龙头实控人落马。三安2025年预亏2-3亿", importance:3 },
 // ─── 2026-01 MAG7财报季 ───
-{ id:“p36”, date:“2026-01-28”, track:“us”, title:“MAG7 Q4财报季开启：Meta/MSFT/TSLA/AAPL集体超预期”, tags:[“财报”], desc:“AI capex指引强劲，2026盈利预期上修至18%。市场分化明显——AI受益者vs传统业务”, importance:3 },
-{ id:“p37”, date:“2026-01-28”, track:“asia”, title:“三星电子Q4 2025财报：HBM3E驱动营收大增”, tags:[“财报”], desc:“AI内存供应链核心。SK海力士同季亦超预期。韩股半导体板块领涨”, importance:2 },
+{ id:"p36", date:"2026-01-28", track:"us", title:"MAG7 Q4财报季开启：Meta/MSFT/TSLA/AAPL集体超预期", tags:["财报"], desc:"AI capex指引强劲,2026盈利预期上修至18%。市场分化明显——AI受益者vs传统业务", importance:3 },
+{ id:"p37", date:"2026-01-28", track:"asia", title:"三星电子Q4 2025财报：HBM3E驱动营收大增", tags:["财报"], desc:"AI内存供应链核心。SK海力士同季亦超预期。韩股半导体板块领涨", importance:2 },
 ];
 
 const SEED_ONGOING = [
-{ id:“o1”, title:“中美关税战2.0”, track:“us”, tags:[“关税”,“地缘政治”], status:“escalating”, startDate:“2025-02-01”, updates:[
-{ date:“2025-02-01”, text:“对华加征10%额外关税” },
-{ date:“2025-02-25”, text:“全面25%钢铝关税，铝价跳涨” },
-{ date:“2025-04-02”, text:”‘解放日’全面对等关税，全球震荡” },
-{ date:“2025-04-09”, text:“对华关税升至145%，中国反制稀土出口管制” },
-{ date:“2025-05-12”, text:“日内瓦会谈，关税降至30%（90天窗口）” },
-{ date:“2026-03-20”, text:“H200芯片、波音、大豆仍是核心博弈筹码” },
+{ id:"o1", title:"中美关税战2.0", track:"us", tags:["关税","地缘政治"], status:"escalating", startDate:"2025-02-01", updates:[
+{ date:"2025-02-01", text:"对华加征10%额外关税" },
+{ date:"2025-02-25", text:"全面25%钢铝关税,铝价跳涨" },
+{ date:"2025-04-02", text:"‘解放日’全面对等关税,全球震荡" },
+{ date:"2025-04-09", text:"对华关税升至145%,中国反制稀土出口管制" },
+{ date:"2025-05-12", text:"日内瓦会谈,关税降至30%（90天窗口）" },
+{ date:"2026-03-20", text:"H200芯片、波音、大豆仍是核心博弈筹码" },
 ]},
-{ id:“o2”, title:“美伊冲突与中东局势”, track:“us”, tags:[“战争”,“地缘政治”], status:“escalating”, startDate:“2025-06-01”, updates:[
-{ date:“2025-06-15”, text:“美以联合对伊核设施发出军事警告” },
-{ date:“2025-10-01”, text:“中东紧张推升WTI原油” },
-{ date:“2026-01-03”, text:“美军打击委内瑞拉，地缘紧张加剧，金价飙升” },
-{ date:“2026-03-18”, text:“油价破$100，英国核潜艇抵达阿拉伯海” },
-{ date:“2026-03-22”, text:“伊朗提4项措施回应，霍尔木兹海峡局势紧绷” },
+{ id:"o2", title:"美伊冲突与中东局势", track:"us", tags:["战争","地缘政治"], status:"escalating", startDate:"2025-06-01", updates:[
+{ date:"2025-06-15", text:"美以联合对伊核设施发出军事警告" },
+{ date:"2025-10-01", text:"中东紧张推升WTI原油" },
+{ date:"2026-01-03", text:"美军打击委内瑞拉,地缘紧张加剧,金价飙升" },
+{ date:"2026-03-18", text:"油价破$100,英国核潜艇抵达阿拉伯海" },
+{ date:"2026-03-22", text:"伊朗提4项措施回应,霍尔木兹海峡局势紧绷" },
 ]},
-{ id:“o3”, title:“贵金属超级牛市”, track:“us”, tags:[“贵金属牛市”,“货币政策”], status:“active”, startDate:“2024-03-01”, updates:[
-{ date:“2024-03-08”, text:“金价突破$2,100启动新一轮牛市” },
-{ date:“2025-03-14”, text:“金价首破$3,000” },
-{ date:“2025-10-17”, text:“金价破$4,000，年内53次创ATH” },
-{ date:“2025-12-31”, text:“年终：金+66%，银+142%，铜+41%” },
-{ date:“2026-01-29”, text:“金价ATH $5,595，白银$110.87” },
-{ date:“2026-03-20”, text:“金价回调至$4,660区间，JPM目标Q4 $5,000” },
+{ id:"o3", title:"贵金属超级牛市", track:"us", tags:["贵金属牛市","货币政策"], status:"active", startDate:"2024-03-01", updates:[
+{ date:"2024-03-08", text:"金价突破$2,100启动新一轮牛市" },
+{ date:"2025-03-14", text:"金价首破$3,000" },
+{ date:"2025-10-17", text:"金价破$4,000,年内53次创ATH" },
+{ date:"2025-12-31", text:"年终：金+66%,银+142%,铜+41%" },
+{ date:"2026-01-29", text:"金价ATH $5,595,白银$110.87" },
+{ date:"2026-03-20", text:"金价回调至$4,660区间,JPM目标Q4 $5,000" },
 ]},
-{ id:“o4”, title:“A股龙头留置潮”, track:“asia”, tags:[“监管风暴”], status:“active”, startDate:“2026-03-20”, updates:[
-{ date:“2026-03-20”, text:“恒立液压汪立平被留置，此前套现29亿” },
-{ date:“2026-03-22”, text:“三安光电林秀成被国家监委留置，一周两起” },
+{ id:"o4", title:"A股龙头留置潮", track:"asia", tags:["监管风暴"], status:"active", startDate:"2026-03-20", updates:[
+{ date:"2026-03-20", text:"恒立液压汪立平被留置,此前套现29亿" },
+{ date:"2026-03-22", text:"三安光电林秀成被国家监委留置,一周两起" },
 ]},
-{ id:“o5”, title:“HYPE生态与Hyperliquid崛起”, track:“crypto”, tags:[“科技竞争”], status:“active”, startDate:“2024-11-01”, coin:“HYPE”, updates:[
-{ date:“2024-11-29”, text:“HYPE代币TGE空投，开盘暴涨” },
-{ date:“2025-03-01”, text:“日交易量持续创新高” },
-{ date:“2025-10-10”, text:“币安宕机凸显CEX风险，DEX叙事受益” },
-{ date:“2026-03-10”, text:“HIP-4 testnet上线：Outcome Contracts预测市场，BTC/HYPE二元期权” },
+{ id:"o5", title:"HYPE生态与Hyperliquid崛起", track:"crypto", tags:["科技竞争"], status:"active", startDate:"2024-11-01", coin:"HYPE", updates:[
+{ date:"2024-11-29", text:"HYPE代币TGE空投,开盘暴涨" },
+{ date:"2025-03-01", text:"日交易量持续创新高" },
+{ date:"2025-10-10", text:"币安宕机凸显CEX风险,DEX叙事受益" },
+{ date:"2026-03-10", text:"HIP-4 testnet上线：Outcome Contracts预测市场,BTC/HYPE二元期权" },
 ]},
 ];
 
 const SEED_FUTURE = [
 // ─── 本周 ───
-{ id:“f01”, date:“2026-03-24”, track:“asia”, title:“恒立液压/三安光电复牌首日”, tags:[“公司事件”], desc:“两大千亿龙头留置后首个交易日，关注跌停板数量和恐慌传导范围” },
+{ id:"f01", date:"2026-03-24", track:"asia", title:"恒立液压/三安光电复牌首日", tags:["公司事件"], desc:"两大千亿龙头留置后首个交易日,关注跌停板数量和恐慌传导范围" },
 
 // ─── 4月 ───
-{ id:“f03”, date:“2026-04-15”, track:“asia”, title:“中国Q1 GDP数据”, tags:[“数据发布”], desc:“关注关税冲击下出口承压与内需刺激对冲效果” },
-{ id:“f18”, date:“2026-04-22”, track:“asia”, title:“SK海力士 Q1 2026财报”, tags:[“财报”], desc:“HBM产能/定价是AI硬件供应链核心变量。HBM3E出货节奏决定英伟达供给” },
-{ id:“f19”, date:“2026-04-23”, track:“asia”, title:“三星电子 Q1 2026财报”, tags:[“财报”], desc:“HBM3E良率追赶进度。AI内存需求与传统DRAM周期分化” },
-{ id:“f05”, date:“2026-04-28”, track:“us”, title:“FOMC 4月利率决议（Powell任期末会议）”, tags:[“会议”,“政策”], desc:“当前3.50-3.75%。可能是鲍威尔最后一次主持” },
-{ id:“f06”, date:“2026-04-30”, track:“asia”, title:“A股年报季收官 + 腾讯/阿里Q1财报窗口”, tags:[“财报”], desc:“腾讯3月暴跌6.5%后的AI capex回报验证窗口” },
+{ id:"f03", date:"2026-04-15", track:"asia", title:"中国Q1 GDP数据", tags:["数据发布"], desc:"关注关税冲击下出口承压与内需刺激对冲效果" },
+{ id:"f18", date:"2026-04-22", track:"asia", title:"SK海力士 Q1 2026财报", tags:["财报"], desc:"HBM产能/定价是AI硬件供应链核心变量。HBM3E出货节奏决定英伟达供给" },
+{ id:"f19", date:"2026-04-23", track:"asia", title:"三星电子 Q1 2026财报", tags:["财报"], desc:"HBM3E良率追赶进度。AI内存需求与传统DRAM周期分化" },
+{ id:"f05", date:"2026-04-28", track:"us", title:"FOMC 4月利率决议（Powell任期末会议）", tags:["会议","政策"], desc:"当前3.50-3.75%。可能是鲍威尔最后一次主持" },
+{ id:"f06", date:"2026-04-30", track:"asia", title:"A股年报季收官 + 腾讯/阿里Q1财报窗口", tags:["财报"], desc:"腾讯3月暴跌6.5%后的AI capex回报验证窗口" },
 
 // ─── 5月 ───
-{ id:“f07”, date:“2026-05-15”, track:“us”, title:“鲍威尔美联储主席任期届满”, tags:[“政策”,“市场里程碑”], desc:“Powell第二届任期结束。特朗普将提名继任者，货币政策方向可能根本性转变” },
+{ id:"f07", date:"2026-05-15", track:"us", title:"鲍威尔美联储主席任期届满", tags:["政策","市场里程碑"], desc:"Powell第二届任期结束。特朗普将提名继任者,货币政策方向可能根本性转变" },
 
 // ─── 6月 ───
-{ id:“f21”, date:“2026-06-01”, track:“crypto”, title:“Hyperliquid HIP-4主网预计上线”, tags:[“市场里程碑”], desc:“一日到期预测市场正式落地，BTC/HYPE二元期权先行”, coin:“HYPE” },
-{ id:“f08”, date:“2026-06-10”, track:“us”, title:“Oracle(ORCL) Q4 FY2026财报”, tags:[“财报”], desc:“上季EPS $1.79超预期15%。关注AI infra收入和TikTok进展。股价$150区间” },
-{ id:“f09”, date:“2026-06-15”, track:“us”, title:“SpaceX IPO（预计6月Nasdaq）”, tags:[“IPO”,“市场里程碑”], desc:“史上最大IPO：估值$1.5-1.75万亿，融资$500亿。含Starlink+xAI+Grok” },
-{ id:“f10”, date:“2026-06-16”, track:“us”, title:“FOMC 6月利率决议（含SEP+点阵图）”, tags:[“会议”,“政策”], desc:“可能是新主席首次主持” },
+{ id:"f21", date:"2026-06-01", track:"crypto", title:"Hyperliquid HIP-4主网预计上线", tags:["市场里程碑"], desc:"一日到期预测市场正式落地,BTC/HYPE二元期权先行", coin:"HYPE" },
+{ id:"f08", date:"2026-06-10", track:"us", title:"Oracle(ORCL) Q4 FY2026财报", tags:["财报"], desc:"上季EPS $1.79超预期15%。关注AI infra收入和TikTok进展。股价$150区间" },
+{ id:"f09", date:"2026-06-15", track:"us", title:"SpaceX IPO（预计6月Nasdaq）", tags:["IPO","市场里程碑"], desc:"史上最大IPO：估值$1.5-1.75万亿,融资$500亿。含Starlink+xAI+Grok" },
+{ id:"f10", date:"2026-06-16", track:"us", title:"FOMC 6月利率决议（含SEP+点阵图）", tags:["会议","政策"], desc:"可能是新主席首次主持" },
 
 // ─── 7月 ───
-{ id:“f11”, date:“2026-07-01”, track:“asia”, title:“日本央行7月利率决议”, tags:[“会议”,“政策”], desc:“BOJ加息路径关键节点” },
-{ id:“f22”, date:“2026-07-15”, track:“asia”, title:“三星/SK海力士 Q2财报窗口”, tags:[“财报”], desc:“HBM定价与AI供应链核心” },
-{ id:“f13”, date:“2026-07-18”, track:“crypto”, title:“GENIUS Act配套规则制定截止”, tags:[“政策”,“到期日”], desc:“OCC/FDIC细则将重塑稳定币格局”, coin:“ETH” },
+{ id:"f11", date:"2026-07-01", track:"asia", title:"日本央行7月利率决议", tags:["会议","政策"], desc:"BOJ加息路径关键节点" },
+{ id:"f22", date:"2026-07-15", track:"asia", title:"三星/SK海力士 Q2财报窗口", tags:["财报"], desc:"HBM定价与AI供应链核心" },
+{ id:"f13", date:"2026-07-18", track:"crypto", title:"GENIUS Act配套规则制定截止", tags:["政策","到期日"], desc:"OCC/FDIC细则将重塑稳定币格局", coin:"ETH" },
 
 // ─── Q3-Q4 ───
-{ id:“f14”, date:“2026-09-01”, track:“us”, title:“OpenAI/Anthropic IPO窗口”, tags:[“IPO”], desc:“紧随SpaceX之后，三巨头IPO重塑指数权重规则” },
-{ id:“f15”, date:“2026-09-15”, track:“us”, title:“FOMC 9月利率决议（含SEP）”, tags:[“会议”,“政策”], desc:“JPM预计Q4金价目标$5,000” },
-{ id:“f16”, date:“2026-10-27”, track:“us”, title:“FOMC 10月利率决议”, tags:[“会议”,“政策”], desc:“年末倒数第二次” },
-{ id:“f17”, date:“2026-12-08”, track:“us”, title:“FOMC 12月利率决议（含SEP+点阵图）”, tags:[“会议”,“政策”], desc:“2026最后一次” },
+{ id:"f14", date:"2026-09-01", track:"us", title:"OpenAI/Anthropic IPO窗口", tags:["IPO"], desc:"紧随SpaceX之后,三巨头IPO重塑指数权重规则" },
+{ id:"f15", date:"2026-09-15", track:"us", title:"FOMC 9月利率决议（含SEP）", tags:["会议","政策"], desc:"JPM预计Q4金价目标$5,000" },
+{ id:"f16", date:"2026-10-27", track:"us", title:"FOMC 10月利率决议", tags:["会议","政策"], desc:"年末倒数第二次" },
+{ id:"f17", date:"2026-12-08", track:"us", title:"FOMC 12月利率决议（含SEP+点阵图）", tags:["会议","政策"], desc:"2026最后一次" },
 ];
 
 /* ═══════════════════════════════════════════
 UTILS
 ═══════════════════════════════════════════ */
 const genId = () => Math.random().toString(36).slice(2,10);
-const fmtDate = d => { if(!d) return “”; const dt=new Date(d+“T00:00:00”); return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,"0")}.${String(dt.getDate()).padStart(2,"0")}`; };
-const daysDiff = d => { const n=new Date(); n.setHours(0,0,0,0); return Math.ceil((new Date(d+“T00:00:00”)-n)/864e5); };
-const trackColor = t => TRACK_META[t]?.color || “#e0e0e8”;
-const trackDim = t => TRACK_META[t]?.dim || “#1e1e2e”;
+const fmtDate = d => { if(!d) return ""; const dt=new Date(d+"T00:00:00"); return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,"0")}.${String(dt.getDate()).padStart(2,"0")}`; };
+const daysDiff = d => { const n=new Date(); n.setHours(0,0,0,0); return Math.ceil((new Date(d+"T00:00:00")-n)/864e5); };
+const trackColor = t => TRACK_META[t]?.color || "#e0e0e8";
+const trackDim = t => TRACK_META[t]?.dim || "#1e1e2e";
 
 /* localStorage helpers — with version-based cache busting */
-const DATA_VERSION = “v3.0”; // bump this when SEED data changes
-const KEYS = { past:“mc_past”, ongoing:“mc_ongoing”, future:“mc_future”, version:“mc_version” };
+const DATA_VERSION = "v3.0"; // bump this when SEED data changes
+const KEYS = { past:"mc_past", ongoing:"mc_ongoing", future:"mc_future", version:"mc_version" };
 function load(key, seed) {
 const storedVer = localStorage.getItem(KEYS.version);
 if (storedVer !== DATA_VERSION) {
@@ -368,37 +368,37 @@ window.location.reload();
 MODAL COMPONENT
 ═══════════════════════════════════════════ */
 function EventModal({ mode, type, event, onSave, onDelete, onClose }) {
-const isOngoing = type === “ongoing”;
+const isOngoing = type === "ongoing";
 const [form, setForm] = useState(event || {
-title:””, date:””, track:“asia”, tags:[], desc:””, importance:2,
-…(isOngoing ? { status:“active”, startDate:””, updates:[] } : {}),
+title:"", date:"", track:"asia", tags:[], desc:"", importance:2,
+…(isOngoing ? { status:"active", startDate:"", updates:[] } : {}),
 });
 const set = (k,v) => setForm(p=>({…p,[k]:v}));
-const toggleTag = t => set(“tags”, form.tags?.includes(t) ? form.tags.filter(x=>x!==t) : […(form.tags||[]),t]);
+const toggleTag = t => set("tags", form.tags?.includes(t) ? form.tags.filter(x=>x!==t) : […(form.tags||[]),t]);
 const tagOpts = TAG_OPTIONS[type] || TAG_OPTIONS.past;
 
 return (
 <div className="modal-overlay" onClick={onClose}>
-<div className=“modal” onClick={e=>e.stopPropagation()}>
-<h3>{mode===“edit”?“编辑”:“添加”}{type===“past”?“历史事件”:type===“ongoing”?“持续追踪”:“未来事件”}</h3>
+<div className="modal" onClick={e=>e.stopPropagation()}>
+<h3>{mode==="edit"?"编辑":"添加"}{type==="past"?"历史事件":type==="ongoing"?"持续追踪":"未来事件"}</h3>
 <label>标题</label>
-<input value={form.title} onChange={e=>set(“title”,e.target.value)} placeholder=“事件名称” />
-<label>{isOngoing?“开始日期”:“日期”}</label>
-<input type=“date” value={isOngoing?form.startDate:form.date} onChange={e=>set(isOngoing?“startDate”:“date”,e.target.value)} />
+<input value={form.title} onChange={e=>set("title",e.target.value)} placeholder="事件名称" />
+<label>{isOngoing?"开始日期":"日期"}</label>
+<input type="date" value={isOngoing?form.startDate:form.date} onChange={e=>set(isOngoing?"startDate":"date",e.target.value)} />
 <label>市场线</label>
-<select value={form.track} onChange={e=>set(“track”,e.target.value)}>
+<select value={form.track} onChange={e=>set("track",e.target.value)}>
 {Object.entries(TRACK_META).map(([k,v])=><option key={k} value={k}>{v.icon} {v.label}</option>)}
 </select>
-{form.track===“crypto” && <>
+{form.track==="crypto" && <>
 <label>关联币种</label>
-<select value={form.coin||””} onChange={e=>set(“coin”,e.target.value)}>
+<select value={form.coin||""} onChange={e=>set("coin",e.target.value)}>
 <option value="">无</option>
-{[…CRYPTO_COINS,“热门币”].map(c=><option key={c} value={c}>{c}</option>)}
+{[…CRYPTO_COINS,"热门币"].map(c=><option key={c} value={c}>{c}</option>)}
 </select>
 </>}
 {isOngoing && <>
 <label>状态</label>
-<select value={form.status} onChange={e=>set(“status”,e.target.value)}>
+<select value={form.status} onChange={e=>set("status",e.target.value)}>
 {Object.entries(STATUS_MAP).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
 </select>
 </>}
@@ -408,16 +408,16 @@ return (
 </div>
 {!isOngoing && <>
 <label>描述</label>
-<textarea value={form.desc||””} onChange={e=>set(“desc”,e.target.value)} placeholder=“补充说明…” />
+<textarea value={form.desc||""} onChange={e=>set("desc",e.target.value)} placeholder="补充说明…" />
 <label>重要程度</label>
 <div className="importance-sel">
-{[1,2,3].map(i=><div key={i} className={`imp-dot ${form.importance===i?"sel":""}`} onClick={()=>set(“importance”,i)}>{“★”.repeat(i)}</div>)}
+{[1,2,3].map(i=><div key={i} className={`imp-dot ${form.importance===i?"sel":""}`} onClick={()=>set("importance",i)}>{"★".repeat(i)}</div>)}
 </div>
 </>}
 <div className="modal-btns">
-{mode===“edit” && onDelete && <button style={{padding:“8px 18px”,borderRadius:6,border:“1px solid #ef4444”,background:“transparent”,color:”#ef4444”,fontSize:13,cursor:“pointer”,fontFamily:“Noto Sans SC”,marginRight:“auto”}} onClick={()=>onDelete()}>🗑 删除</button>}
+{mode==="edit" && onDelete && <button style={{padding:"8px 18px",borderRadius:6,border:"1px solid #ef4444",background:"transparent",color:"#ef4444",fontSize:13,cursor:"pointer",fontFamily:"Noto Sans SC",marginRight:"auto"}} onClick={()=>onDelete()}>🗑 删除</button>}
 <button className="btn-cancel" onClick={onClose}>取消</button>
-<button className=“btn-save” onClick={()=>{ if(form.title) onSave({…form, id:form.id||genId()}); }}>保存</button>
+<button className="btn-save" onClick={()=>{ if(form.title) onSave({…form, id:form.id||genId()}); }}>保存</button>
 </div>
 </div>
 </div>
@@ -436,7 +436,7 @@ const opened = useRef(false);
 const moved = useRef(false);
 const THRESHOLD = 50;
 
-const begin = x => { startX.current = x; swiping.current = true; moved.current = false; if(ref.current) ref.current.classList.add(“dragging”); };
+const begin = x => { startX.current = x; swiping.current = true; moved.current = false; if(ref.current) ref.current.classList.add("dragging"); };
 const move = x => {
 if(!swiping.current) return;
 const dx = x - startX.current;
@@ -448,21 +448,21 @@ if(ref.current) ref.current.style.transform = `translateX(${val}px)`;
 };
 const end = () => {
 swiping.current = false;
-if(ref.current) ref.current.classList.remove(“dragging”);
+if(ref.current) ref.current.classList.remove("dragging");
 if(currentX.current < -THRESHOLD) {
 opened.current = true;
-if(ref.current) ref.current.style.transform = “translateX(-80px)”;
+if(ref.current) ref.current.style.transform = "translateX(-80px)";
 } else {
 opened.current = false;
-if(ref.current) ref.current.style.transform = “translateX(0)”;
+if(ref.current) ref.current.style.transform = "translateX(0)";
 }
 };
-const close = () => { opened.current = false; currentX.current = 0; if(ref.current) ref.current.style.transform = “translateX(0)”; };
+const close = () => { opened.current = false; currentX.current = 0; if(ref.current) ref.current.style.transform = "translateX(0)"; };
 
 return (
 <div className="swipe-wrapper">
-<div className=“swipe-behind” onClick={()=>onDelete()}>删除</div>
-<div ref={ref} className=“swipe-content”
+<div className="swipe-behind" onClick={()=>onDelete()}>删除</div>
+<div ref={ref} className="swipe-content"
 onTouchStart={e=>begin(e.touches[0].clientX)}
 onTouchMove={e=>move(e.touches[0].clientX)}
 onTouchEnd={end}
@@ -482,23 +482,23 @@ DATA PANEL (export/import)
 ═══════════════════════════════════════════ */
 function DataPanel({ past, ongoing, future, onImport, onMerge, onClose }) {
 const allData = JSON.stringify({ past, ongoing, future, exportedAt: new Date().toISOString() }, null, 2);
-const [importText, setImportText] = useState(””);
-const [mode, setMode] = useState(“export”); // export | import | copied
-const [mergeResult, setMergeResult] = useState(””);
+const [importText, setImportText] = useState("");
+const [mode, setMode] = useState("export"); // export | import | copied
+const [mergeResult, setMergeResult] = useState("");
 
-const handleCopy = () => { navigator.clipboard.writeText(allData).catch(()=>{}); setMode(“copied”); setTimeout(()=>setMode(“export”),1500); };
+const handleCopy = () => { navigator.clipboard.writeText(allData).catch(()=>{}); setMode("copied"); setTimeout(()=>setMode("export"),1500); };
 const handleDownload = () => {
-const blob = new Blob([allData], { type:“application/json” });
+const blob = new Blob([allData], { type:"application/json" });
 const url = URL.createObjectURL(blob);
-const a = document.createElement(“a”); a.href=url; a.download=`market-chronicle-${new Date().toISOString().split("T")[0]}.json`; a.click();
+const a = document.createElement("a"); a.href=url; a.download=`market-chronicle-${new Date().toISOString().split("T")[0]}.json`; a.click();
 URL.revokeObjectURL(url);
 };
 const parseInput = () => {
 try {
 const d = JSON.parse(importText);
 if(d.past && d.ongoing && d.future) return d;
-setMergeResult(“❌ 需包含 past, ongoing, future 字段”); return null;
-} catch { setMergeResult(“❌ JSON 解析失败”); return null; }
+setMergeResult("❌ 需包含 past, ongoing, future 字段"); return null;
+} catch { setMergeResult("❌ JSON 解析失败"); return null; }
 };
 const handleOverwrite = () => { const d = parseInput(); if(d) { onImport(d); onClose(); } };
 const handleMergeClick = () => {
@@ -508,33 +508,33 @@ const newFuture = (d.future||[]).filter(e => !future.some(x=>x.id===e.id)).lengt
 const newOngoing = (d.ongoing||[]).filter(e => !ongoing.some(x=>x.id===e.id)).length;
 const updatedOngoing = (d.ongoing||[]).filter(e => ongoing.some(x=>x.id===e.id)).length;
 onMerge(d);
-setMergeResult(`✅ 合并完成：+${newPast}条历史，+${newFuture}条未来，+${newOngoing}条新追踪，${updatedOngoing}条追踪更新`);
+setMergeResult(`✅ 合并完成：+${newPast}条历史,+${newFuture}条未来,+${newOngoing}条新追踪,${updatedOngoing}条追踪更新`);
 };
 
 return (
 <div className="modal-overlay" onClick={onClose}>
-<div className=“modal data-modal” style={{maxWidth:640}} onClick={e=>e.stopPropagation()}>
+<div className="modal data-modal" style={{maxWidth:640}} onClick={e=>e.stopPropagation()}>
 <h3>📦 数据管理</h3>
-<div style={{display:“flex”,gap:8,marginBottom:16}}>
-<button className={`modal-tag ${mode==="export"?"sel":""}`} onClick={()=>setMode(“export”)}>导出</button>
-<button className={`modal-tag ${mode==="import"?"sel":""}`} onClick={()=>setMode(“import”)}>导入</button>
+<div style={{display:"flex",gap:8,marginBottom:16}}>
+<button className={`modal-tag ${mode==="export"?"sel":""}`} onClick={()=>setMode("export")}>导出</button>
+<button className={`modal-tag ${mode==="import"?"sel":""}`} onClick={()=>setMode("import")}>导入</button>
 </div>
-{mode===“export” ? <>
-<p style={{fontSize:12,color:”#6b6b80”,marginBottom:8}}>复制下方 JSON 发给 Claude 即可进行数据分析，或下载备份</p>
+{mode==="export" ? <>
+<p style={{fontSize:12,color:"#6b6b80",marginBottom:8}}>复制下方 JSON 发给 Claude 即可进行数据分析,或下载备份</p>
 <textarea readOnly value={allData} />
 <div className="data-actions">
-<button onClick={handleCopy}>{mode===“copied”?“✅ 已复制”:“📋 复制”}</button>
+<button onClick={handleCopy}>{mode==="copied"?"✅ 已复制":"📋 复制"}</button>
 <button onClick={handleDownload}>💾 下载 JSON</button>
-<button onClick={onClose} style={{marginLeft:“auto”}}>关闭</button>
+<button onClick={onClose} style={{marginLeft:"auto"}}>关闭</button>
 </div>
 </> : <>
-<p style={{fontSize:12,color:”#6b6b80”,marginBottom:8}}>粘贴 Claude 输出的 JSON — 合并只追加新事件，覆盖会替换全部数据</p>
-<textarea value={importText} onChange={e=>{setImportText(e.target.value);setMergeResult(””);}} placeholder=‘粘贴 JSON 数据…’ />
-{mergeResult && <p style={{fontSize:12,color:mergeResult.startsWith(“✅”)?”#34d399”:”#ef4444”,marginTop:8}}>{mergeResult}</p>}
+<p style={{fontSize:12,color:"#6b6b80",marginBottom:8}}>粘贴 Claude 输出的 JSON — 合并只追加新事件,覆盖会替换全部数据</p>
+<textarea value={importText} onChange={e=>{setImportText(e.target.value);setMergeResult("");}} placeholder=‘粘贴 JSON 数据…’ />
+{mergeResult && <p style={{fontSize:12,color:mergeResult.startsWith("✅")?"#34d399":"#ef4444",marginTop:8}}>{mergeResult}</p>}
 <div className="data-actions">
 <button className="btn-import" onClick={handleMergeClick}>📥 合并导入（追加）</button>
-<button onClick={handleOverwrite} style={{color:”#ef4444”,borderColor:”#ef4444”}}>⚠ 覆盖导入</button>
-<button onClick={onClose} style={{marginLeft:“auto”}}>关闭</button>
+<button onClick={handleOverwrite} style={{color:"#ef4444",borderColor:"#ef4444"}}>⚠ 覆盖导入</button>
+<button onClick={onClose} style={{marginLeft:"auto"}}>关闭</button>
 </div>
 </>}
 </div>
@@ -546,7 +546,7 @@ return (
 MAIN APP
 ═══════════════════════════════════════════ */
 function App() {
-const [tab, setTab] = useState(“past”);
+const [tab, setTab] = useState("past");
 const [tracks, setTracks] = useState({asia:true,us:true,crypto:true});
 const [past, setPast] = useState(()=>load(KEYS.past, SEED_PAST));
 const [ongoing, setOngoing] = useState(()=>load(KEYS.ongoing, SEED_ONGOING));
@@ -554,7 +554,7 @@ const [future, setFuture] = useState(()=>load(KEYS.future, SEED_FUTURE));
 const [modal, setModal] = useState(null);
 const [dataPanel, setDataPanel] = useState(false);
 const [expanded, setExpanded] = useState({});
-const [search, setSearch] = useState(””);
+const [search, setSearch] = useState("");
 const [newUpdates, setNewUpdates] = useState({});
 
 useEffect(()=>save(KEYS.past, past),[past]);
@@ -564,27 +564,27 @@ useEffect(()=>save(KEYS.future, future),[future]);
 const toggleTrack = t => setTracks(p=>({…p,[t]:!p[t]}));
 
 const saveEvent = (type, ev) => {
-const setter = type===“past”?setPast : type===“ongoing”?setOngoing : setFuture;
+const setter = type==="past"?setPast : type==="ongoing"?setOngoing : setFuture;
 setter(prev => {
 const i=prev.findIndex(x=>x.id===ev.id);
 let next;
 if(i>=0){next=[…prev];next[i]=ev;} else {next=[…prev,ev];}
 // Auto-sort: past by date desc, future by date asc, ongoing by startDate desc
-if(type===“past”) next.sort((a,b)=>b.date.localeCompare(a.date));
-else if(type===“future”) next.sort((a,b)=>a.date.localeCompare(b.date));
-else next.sort((a,b)=>(b.startDate||””).localeCompare(a.startDate||””));
+if(type==="past") next.sort((a,b)=>b.date.localeCompare(a.date));
+else if(type==="future") next.sort((a,b)=>a.date.localeCompare(b.date));
+else next.sort((a,b)=>(b.startDate||"").localeCompare(a.startDate||""));
 return next;
 });
 setModal(null);
 };
 const delEvent = (type, id) => {
-const setter = type===“past”?setPast : type===“ongoing”?setOngoing : setFuture;
+const setter = type==="past"?setPast : type==="ongoing"?setOngoing : setFuture;
 setter(prev=>prev.filter(x=>x.id!==id));
 };
 const addUpdate = id => {
 const text=newUpdates[id]; if(!text) return;
-setOngoing(prev=>prev.map(o=>o.id===id?{…o,updates:[…(o.updates||[]),{date:new Date().toISOString().split(“T”)[0],text}]}:o));
-setNewUpdates(p=>({…p,[id]:””}));
+setOngoing(prev=>prev.map(o=>o.id===id?{…o,updates:[…(o.updates||[]),{date:new Date().toISOString().split("T")[0],text}]}:o));
+setNewUpdates(p=>({…p,[id]:""}));
 };
 const handleImport = d => {
 setPast((d.past||[]).sort((a,b)=>b.date.localeCompare(a.date)));
@@ -635,8 +635,8 @@ return (
 <h1>◆ MARKET CHRONICLE</h1>
 <span className="sub">串联过去 · 追踪当下 · 展望未来</span>
 <div className="header-actions">
-<button className=“header-btn” onClick={()=>setDataPanel(true)}>📦 数据</button>
-<button className=“header-btn” onClick={()=>resetAllData()}>🔄 重置</button>
+<button className="header-btn" onClick={()=>setDataPanel(true)}>📦 数据</button>
+<button className="header-btn" onClick={()=>resetAllData()}>🔄 重置</button>
 </div>
 </div>
 
@@ -674,7 +674,7 @@ return (
   {/* ═══ PAST TAB ═══ */}
   {tab==="past" && (
     <div className="timeline">
-      {sortedPast.length===0 && <div className="empty"><div className="icon">📭</div>暂无事件，点击右上角添加</div>}
+      {sortedPast.length===0 && <div className="empty"><div className="icon">📭</div>暂无事件,点击右上角添加</div>}
       {sortedPast.map((ev, idx) => {
         const yr = ev.date?.slice(0,4);
         const prevYr = idx>0 ? sortedPast[idx-1].date?.slice(0,4) : null;
@@ -714,7 +714,7 @@ return (
   {/* ═══ ONGOING TAB ═══ */}
   {tab==="ongoing" && (
     <div>
-      {filteredOngoing.length===0 && <div className="empty"><div className="icon">📭</div>暂无追踪，点击右上角添加</div>}
+      {filteredOngoing.length===0 && <div className="empty"><div className="icon">📭</div>暂无追踪,点击右上角添加</div>}
       {filteredOngoing.map(story=>{
         const isOpen=expanded[story.id];
         const st=STATUS_MAP[story.status]||STATUS_MAP.active;
@@ -775,7 +775,7 @@ return (
   {/* ═══ FUTURE TAB ═══ */}
   {tab==="future" && (
     <div>
-      {sortedFuture.length===0 && <div className="empty"><div className="icon">📭</div>暂无事件，点击右上角添加</div>}
+      {sortedFuture.length===0 && <div className="empty"><div className="icon">📭</div>暂无事件,点击右上角添加</div>}
       {(() => {
         const now = new Date(); now.setHours(0,0,0,0);
         const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
@@ -836,7 +836,7 @@ return (
 );
 }
 
-ReactDOM.createRoot(document.getElementById(“root”)).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 
 </body>
