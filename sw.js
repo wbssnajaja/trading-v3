@@ -3,7 +3,7 @@ var CACHE_NAME = 'trading-v4';
 var ASSETS = [
   './',
   './index.html',
-  './trade.html' // <--- 加上你的第二个页面
+  './TradeFiCalendar.html' // <--- 加上你的第二个页面
 ];
 
 var CDN_HOSTS = ['cdn.jsdelivr.net', 'cdn.bootcdn.net', 'unpkg.com'];
