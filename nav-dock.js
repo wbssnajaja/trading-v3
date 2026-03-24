@@ -8,24 +8,9 @@
 
   // 1️⃣ 页面配置
   var PAGES = [
-    {
-      id: 'trading',
-      label: '交易系统',
-      icon: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.25" y="1.25" width="13.5" height="13.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M4.5 5h7M4.5 8h7M4.5 11h4.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.25"/></svg>',
-      href: './index.html'
-    },
-    {
-      id: 'chronicle',
-      label: '编年史',
-      icon: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.25" y="1.25" width="13.5" height="13.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M5 4.75v6.5M8 6.75v4.5M11 3.75v8.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.25"/></svg>',
-      href: './TradeFiCalendar.html'
-    },
-    {
-      id: 'fundamental',
-      label: '基本面',
-      icon: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.25" y="1.25" width="13.5" height="13.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M4.5 10.75L7 8.25l2 1.75 2.5-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25"/></svg>',
-      href: './fundamental.html'
-    }
+    { id: 'trading', label: '交易系统', icon: '📊', href: './index.html' },
+    { id: 'chronicle', label: '编年史', icon: '◆', href: './TradeFiCalendar.html' },
+    { id: 'fundamental', label: '基本面', icon: '📈', href: './fundamental.html' }
   ];
 
   // 2️⃣ 当前页面判断（更稳）
@@ -74,16 +59,7 @@
     }
 
     #tradefi-dock a .ic {
-      width: 22px;
-      height: 22px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #tradefi-dock a .ic svg {
-      width: 100%;
-      height: 100%;
+      font-size: 20px;
     }
 
     #tradefi-dock a.active {
