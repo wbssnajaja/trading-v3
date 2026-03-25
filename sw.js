@@ -1,4 +1,4 @@
-var CACHE_NAME = 'tradefi-v8';
+var CACHE_NAME = 'tradefi-v9';
 
 var ASSETS = [
   './',
